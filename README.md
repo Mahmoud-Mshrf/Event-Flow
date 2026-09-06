@@ -1,7 +1,11 @@
-# Event Flow
+# EventFlow
 
 > 🚧 Work in Progress
 
-This project is currently under development.
+**EventFlow** is a multi-tenant event management SaaS platform currently under development.
 
-The README will be completed on Day 16 with the project's architecture, features, technical decisions, setup instructions, and case-study documentation.
+This repository is being built as a portfolio and interview-preparation project.
+
+The complete README will be finalized on **Day 16** and will document the system architecture, key engineering challenges, technical decisions, trade-offs, setup instructions, and deployment.
+
+**Status:** Work in Progress
