@@ -1,3 +1,7 @@
+using EventFlow.Domain.Events;
+using EventFlow.Domain.Orders.OrderItems;
+using EventFlow.Domain.Tickets;
+
 namespace EventFlow.Domain.TicketTypes;
 
 public class TicketType
@@ -17,4 +21,13 @@ public class TicketType
     public DateTime SalesEnd { get; private set; }
 
     public byte[] RowVersion { get; private set; } = null!;
+
+    // Navigation properties
+    public Event Event { get; private set; } = null!;
+
+    public ICollection<Ticket> Tickets { get; private set; }
+        = new List<Ticket>();
+
+    public ICollection<OrderItem> OrderItems { get; private set; }
+        = new List<OrderItem>();
 }

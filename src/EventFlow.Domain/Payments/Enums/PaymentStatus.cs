@@ -1,4 +1,4 @@
-namespace EventFlow.Domain.Payment.Enums;
+namespace EventFlow.Domain.Payments.Enums;
 
 public enum PaymentStatus
 {

@@ -1,4 +1,8 @@
 using EventFlow.Domain.Events.Enums;
+using EventFlow.Domain.Orders;
+using EventFlow.Domain.Tenants;
+using EventFlow.Domain.Tickets;
+using EventFlow.Domain.TicketTypes;
 
 namespace EventFlow.Domain.Events;
 
@@ -21,4 +25,16 @@ public class Event
     public DateTime RegistrationEnd { get; private set; }
 
     public EventVisibility Visibility { get; private set; }
+
+    // Navigation properties
+    public Tenant Tenant { get; private set; } = null!;
+
+    public ICollection<TicketType> TicketTypes { get; private set; }
+        = new List<TicketType>();
+
+    public ICollection<Ticket> Tickets { get; private set; }
+        = new List<Ticket>();
+
+    public ICollection<Order> Orders { get; private set; }
+        = new List<Order>();
 }

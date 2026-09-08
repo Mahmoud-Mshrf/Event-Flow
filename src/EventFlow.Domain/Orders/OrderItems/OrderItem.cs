@@ -1,3 +1,5 @@
+using EventFlow.Domain.TicketTypes;
+
 namespace EventFlow.Domain.Orders.OrderItems;
 
 public class OrderItem
@@ -12,4 +14,9 @@ public class OrderItem
     public int Quantity { get; private set; }
 
     public decimal UnitPrice { get; private set; }
+
+    // Navigation properties
+    public Order Order { get; private set; } = null!;
+
+    public TicketType TicketType { get; private set; } = null!;
 }

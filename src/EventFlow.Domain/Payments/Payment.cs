@@ -1,6 +1,7 @@
-using EventFlow.Domain.Payment.Enums;
+using EventFlow.Domain.Orders;
+using EventFlow.Domain.Payments.Enums;
 
-namespace EventFlow.Domain.Payment;
+namespace EventFlow.Domain.Payments;
 
 public class Payment
 {
@@ -13,5 +14,8 @@ public class Payment
     public PaymentStatus PaymentStatus { get; private set; }
 
     public string? ProviderTransactionId { get; private set; }
+
+    // Navigation properties
+    public Order Order { get; private set; } = null!;
 }
 

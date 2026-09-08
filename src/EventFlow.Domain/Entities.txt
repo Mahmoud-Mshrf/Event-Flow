@@ -36,5 +36,22 @@ OrderStatus=> Enum : ( Pending,Paid,Expired,Cancelled )
 
 PaymentStatus=> Enum : ( Pending,Succeeded,Failed )
 
+Relationships:
 
+Tenant 1 ──── * User
+Tenant 1 ──── * Event
+
+Event 1 ──── * TicketType
+Event 1 ──── * Order
+Event 1 ──── * Ticket
+
+User 1 ──── * Order       (Attendee)
+User 1 ──── * Ticket      (Attendee)
+
+TicketType 1 ──── * OrderItem
+TicketType 1 ──── * Ticket
+
+Order 1 ──── * OrderItem
+Order 1 ──── 1 Payment
+Order 1 ──── * Ticket
 
