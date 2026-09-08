@@ -12,7 +12,7 @@ TicketType=> Type: ( Id,EventId,TenantId,Name,Price,Capacity,ReservedQuantity,Sa
 
 Ticket=> Type: ( Id,EventId,TenantId,AttendeeId,TicketTypeId,OrderId,TicketNumber,Status,QrCode,CheckedInAt )
 
-Order=> Type: ( Id,EventId,TenantId,AttendeeId,PaymentId,OrderNumber,OrderStatus,CreatedAt,PaidAt,Total,OrderItems )
+Order=> Type: ( Id,EventId,TenantId,AttendeeId,OrderNumber,OrderStatus,CreatedAt,PaidAt,Total,OrderItems )
 
 OrderItem=> Type: ( Id,TenantId,OrderId,TicketTypeId,Quantity,UnitPrice )
 
