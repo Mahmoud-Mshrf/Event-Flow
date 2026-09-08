@@ -1,0 +1,36 @@
+
+**Entities:
+
+
+Tenant=> Type : ( Id,Name,Description )
+
+User=> Type : ( Id,TenantId?,Name,Email,PasswordHash,Role?,IsActive )
+
+Event=> Type : ( Id,TenantId,EventName,EventStatus,Description,Location,StartDate,EndDate,RegistrationStart,RegistrationEnd,Visibility )
+
+TicketType=> Type: ( Id,EventId,Name,Price,Capacity,ReservedQuantity,SalesStart,SalesEnd )
+
+Ticket=> Type: ( Id,EventId,AttendeeId,TicketTypeId,OrderId,TicketNumber,Status,QrCode,CheckedInAt )
+
+Order=> Type: ( Id,EventId,AttendeeId,OrderNumber,PaymentStatus,OrderStatus,CreatedAt,PaidAt,Total,OrderItems )
+
+OrderItem=> Type: ( Id,OrderId,TicketTypeId,Quantity,UnitPrice )
+
+*Notes* :
+    - AttendeeId => user acts as Attendee 
+    - ReservedQuantity (int) 
+
+**Enums:
+
+EventStatus=> Enum : ( Draft - Published - RegistrationOpen - RegistrationClosed - Completed - Cancelled )
+
+EventVisibility => Enum : ( Public,Private )
+
+UserRole=> Enum : ( Owner,Manager,Employee )
+
+OrderStatus=> Enum : ( Pending,Paid,Expired,Cancelled )
+
+PaymentStatus=> Enum : ( Pending,Succeeded,Failed )
+
+
+
