@@ -8,13 +8,15 @@ User=> Type : ( Id,PhoneNumber,TenantId?,Name,Email,PasswordHash,Role?,IsActive 
 
 Event=> Type : ( Id,TenantId,EventName,EventStatus,Description,Location,StartDate,EndDate,RegistrationStart,RegistrationEnd,Visibility )
 
-TicketType=> Type: ( Id,EventId,TenantId,Name,Price,Capacity,ReservedQuantity,SalesStart,SalesEnd )
+TicketType=> Type: ( Id,EventId,TenantId,Name,Price,Capacity,ReservedQuantity,SalesStart,SalesEnd,RowVersion)
 
 Ticket=> Type: ( Id,EventId,TenantId,AttendeeId,TicketTypeId,OrderId,TicketNumber,Status,QrCode,CheckedInAt )
 
-Order=> Type: ( Id,EventId,TenantId,AttendeeId,OrderNumber,PaymentStatus,OrderStatus,CreatedAt,PaidAt,Total,OrderItems )
+Order=> Type: ( Id,EventId,TenantId,AttendeeId,PaymentId,OrderNumber,OrderStatus,CreatedAt,PaidAt,Total,OrderItems )
 
 OrderItem=> Type: ( Id,TenantId,OrderId,TicketTypeId,Quantity,UnitPrice )
+
+Payment=> Type: ( Id,OrderId,Amount,PaymentStatus,ProviderTransactionId)
 
 *Notes* :
     - AttendeeId => user acts as Attendee 
