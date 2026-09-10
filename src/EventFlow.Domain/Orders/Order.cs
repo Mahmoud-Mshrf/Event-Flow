@@ -31,9 +31,8 @@ public class Order
 
     public Payment Payment { get; private set; } = null!;
 
-    public ICollection<OrderItem> OrderItems { get; private set; }
-        = new List<OrderItem>();
-
-    public ICollection<Ticket> Tickets { get; private set; }
-        = new List<Ticket>();
+    private readonly  List<OrderItem> _orderItems = [];
+    public IReadOnlyCollection<OrderItem> OrderItems => _orderItems;
+    private readonly List<Ticket> _tickets = [];
+    public IReadOnlyCollection<Ticket> Tickets => _tickets;
 }
