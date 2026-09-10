@@ -1,3 +1,4 @@
+using EventFlow.Application.Common.Interfaces;
 using EventFlow.Domain.Events;
 using EventFlow.Domain.Orders;
 using EventFlow.Domain.Orders.OrderItems;
@@ -11,12 +12,19 @@ using Microsoft.Extensions.Options;
 
 namespace EventFlow.Infrastructure.Data;
 
-public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(options)
+public class AppDbContext(DbContextOptions<AppDbContext> options,ICurrentTenant tenant) : DbContext(options)
 {
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
         modelBuilder.ApplyConfigurationsFromAssembly(typeof(AppContext).Assembly);
+
+        modelBuilder.Entity<Event>().HasQueryFilter(x=>x.TenantId.ToString()==tenant.TenantId);
+        modelBuilder.Entity<Order>().HasQueryFilter(x=>x.TenantId.ToString()==tenant.TenantId);
+        modelBuilder.Entity<User>().HasQueryFilter(x=>x.TenantId.ToString()==tenant.TenantId);
+        modelBuilder.Entity<Ticket>().HasQueryFilter(x=>x.TenantId.ToString()==tenant.TenantId);
+        modelBuilder.Entity<TicketType>().HasQueryFilter(x=>x.TenantId.ToString()==tenant.TenantId);
+        modelBuilder.Entity<OrderItem>().HasQueryFilter(x=>x.TenantId.ToString()==tenant.TenantId);
     }
     public DbSet<Ticket> Tickets => Set<Ticket>();
     public DbSet<TicketType> TicketTypes => Set<TicketType>();
