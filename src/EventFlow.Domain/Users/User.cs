@@ -20,7 +20,7 @@ public class User
 
     public UserRole? Role { get; private set; }
 
-    public bool IsActive { get; private set; }
+    public bool Disabled { get; private set; }
 
     // Navigation properties
     public Tenant? Tenant { get; private set; }
