@@ -11,9 +11,11 @@ public class Tenant
     public string? Description { get; private set; }
 
     // Navigation properties
-    public ICollection<User> Users { get; private set; }
-        = new List<User>();
+    private readonly List<User> _users = [];
 
-    public ICollection<Event> Events { get; private set; }
-        = new List<Event>();
+public IReadOnlyCollection<User> Users => _users;
+
+private readonly List<Event> _events = [];
+
+public IReadOnlyCollection<Event> Events => _events;
 }

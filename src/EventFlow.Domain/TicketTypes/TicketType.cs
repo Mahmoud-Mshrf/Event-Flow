@@ -25,9 +25,8 @@ public class TicketType
     // Navigation properties
     public Event Event { get; private set; } = null!;
 
-    public ICollection<Ticket> Tickets { get; private set; }
-        = new List<Ticket>();
-
-    public ICollection<OrderItem> OrderItems { get; private set; }
-        = new List<OrderItem>();
+    private readonly List<Ticket> _tickets = [];
+    public IReadOnlyCollection<Ticket> Tickets => _tickets;
+    private readonly List<OrderItem> _orderItems = [];
+    public IReadOnlyCollection<OrderItem> OrderItems => _orderItems;
 }

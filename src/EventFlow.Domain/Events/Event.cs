@@ -29,12 +29,12 @@ public class Event
     // Navigation properties
     public Tenant Tenant { get; private set; } = null!;
 
-    public ICollection<TicketType> TicketTypes { get; private set; }
-        = new List<TicketType>();
+    private readonly List<TicketType> _ticketTypes = [];
+    public IReadOnlyCollection<TicketType> TicketTypes => _ticketTypes;
 
-    public ICollection<Ticket> Tickets { get; private set; }
-        = new List<Ticket>();
+    private readonly List<Ticket> _tickets = [];
+    public IReadOnlyCollection<Ticket> Tickets => _tickets;
 
-    public ICollection<Order> Orders { get; private set; }
-        = new List<Order>();
+    private readonly List<Order> _orders = [];
+    public IReadOnlyCollection<Order> Orders => _orders;
 }
