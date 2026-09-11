@@ -157,6 +157,16 @@ public class User:AuditableEntity
         return Result.Updated;
     }
 
-    
+    public Result<Updated> UpdatePassword(string newPassword)
+    {
+        if (string.IsNullOrWhiteSpace(newPassword))
+            return UserErrors.PasswordIsRequired;
+        if (newPassword.Length < 8 || !Regex.IsMatch(newPassword, @"^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$"))
+        {
+            return UserErrors.InvalidPassword;
+        }
+        PasswordHash = newPassword;
+        return Result.Updated;
+    }
 
 }
