@@ -1,3 +1,4 @@
+using EventFlow.Domain.Common;
 using EventFlow.Domain.Events;
 using EventFlow.Domain.Orders;
 using EventFlow.Domain.Tickets.Enums;
@@ -6,10 +7,8 @@ using EventFlow.Domain.Users;
 
 namespace EventFlow.Domain.Tickets;
 
-public class Ticket
+public class Ticket:AuditableEntity
 {
-    public Guid Id { get; private set; }
-
     public Guid EventId { get; private set; }
     public Guid TenantId { get; private set; }
 

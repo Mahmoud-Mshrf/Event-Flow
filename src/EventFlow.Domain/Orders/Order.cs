@@ -1,3 +1,4 @@
+using EventFlow.Domain.Common;
 using EventFlow.Domain.Events;
 using EventFlow.Domain.Orders.Enums;
 using EventFlow.Domain.Orders.OrderItems;
@@ -7,10 +8,8 @@ using EventFlow.Domain.Users;
 
 namespace EventFlow.Domain.Orders;
 
-public class Order
+public class Order:AuditableEntity
 {
-    public Guid Id { get; private set; }
-
     public Guid EventId { get; private set; }
     public Guid TenantId { get; private set; }
     public Guid AttendeeId { get; private set; }

@@ -1,11 +1,10 @@
+using EventFlow.Domain.Common;
 using EventFlow.Domain.TicketTypes;
 
 namespace EventFlow.Domain.Orders.OrderItems;
 
-public class OrderItem
+public class OrderItem:AuditableEntity
 {
-    public Guid Id { get; private set; }
-
     public Guid TenantId { get; private set; }
 
     public Guid OrderId { get; private set; }

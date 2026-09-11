@@ -1,12 +1,11 @@
+using EventFlow.Domain.Common;
 using EventFlow.Domain.Orders;
 using EventFlow.Domain.Payments.Enums;
 
 namespace EventFlow.Domain.Payments;
 
-public class Payment
+public class Payment:AuditableEntity
 {
-    public Guid Id { get; private set; }
-
     public Guid OrderId { get; private set; }
 
     public decimal Amount { get; private set; }
