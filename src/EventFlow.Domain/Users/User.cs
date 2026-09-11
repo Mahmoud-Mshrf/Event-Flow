@@ -10,23 +10,16 @@ namespace EventFlow.Domain.Users;
 public class User:AuditableEntity
 {
     public string PhoneNumber { get; private set; } = null!;
-
     public Guid? TenantId { get; private set; }
-
     public string Name { get; private set; } = null!;
     public string Email { get; private set; } = null!;
     public string PasswordHash { get; private set; } = null!;
-
     public UserRole? Role { get; private set; }
-
     public bool Disabled { get; private set; }
-
     // Navigation properties
     public Tenant? Tenant { get; private set; }
-
     private readonly List<Ticket> _tickets = [];
     public IReadOnlyCollection<Ticket> Tickets => _tickets;
-
     private readonly List<Order> _orders = [];
     public IReadOnlyCollection<Order> Orders => _orders;
 }
