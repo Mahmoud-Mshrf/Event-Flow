@@ -78,7 +78,7 @@ public class User:AuditableEntity
 
         return user;
     }
-    public Result<User> CreateAttendee(Guid id, string phoneNumber, string name, string email, string passwordHash)
+    public static Result<User> CreateAttendee(Guid id, string phoneNumber, string name, string email, string passwordHash)
     {
         // Validate the input parameters
         if (string.IsNullOrWhiteSpace(phoneNumber) || !Regex.IsMatch(phoneNumber, @"^\+?\d{7,15}$"))
@@ -116,4 +116,47 @@ public class User:AuditableEntity
 
         return user;
     }
+
+    public Result<Updated> UpdatePhoneNumber(string phoneNumber)
+    {
+        if (string.IsNullOrWhiteSpace(phoneNumber) || !Regex.IsMatch(phoneNumber, @"^\+?\d{7,15}$"))
+        {
+            return UserErrors.InvalidPhoneNumber;
+        }
+        PhoneNumber = phoneNumber;
+        return Result.Updated;
+    }
+    public Result<Updated> UpdateName(string name)
+    {
+        if (string.IsNullOrWhiteSpace(name))
+            return UserErrors.NameIsRequired;
+        if(name.Length < 6 || name.Length > 100)
+            return UserErrors.InvalidName;
+        Name = name;
+        return Result.Updated;
+    }
+    public Result<Updated> ChangeRole(UserRole? role)
+    {
+        if(role != null && !Enum.IsDefined(typeof(UserRole), role))
+        {
+            return UserErrors.InvalidRole;
+        }
+        Role = role;
+        return Result.Updated;
+    }
+
+    public Result<Updated> Disable()
+    {
+        Disabled = true;
+        return Result.Updated;
+    }
+
+    public Result<Updated> Enable()
+    {
+        Disabled = false;
+        return Result.Updated;
+    }
+
+    
+
 }
