@@ -62,10 +62,10 @@ public class User:AuditableEntity
         }
         if (string.IsNullOrWhiteSpace(passwordHash))
             return UserErrors.PasswordIsRequired;
-        if (passwordHash.Length < 8 || !Regex.IsMatch(passwordHash, @"^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$"))
-        {
-            return UserErrors.InvalidPassword;
-        }
+        // if (passwordHash.Length < 8 || !Regex.IsMatch(passwordHash, @"^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$"))
+        // {
+        //     return UserErrors.InvalidPassword;
+        // }
         if(role != null && !Enum.IsDefined(typeof(UserRole), role))
         {
             return UserErrors.InvalidRole;
@@ -103,10 +103,10 @@ public class User:AuditableEntity
         }
         if (string.IsNullOrWhiteSpace(passwordHash))
             return UserErrors.PasswordIsRequired;
-        if (passwordHash.Length < 8 || !Regex.IsMatch(passwordHash, @"^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$"))
-        {
-            return UserErrors.InvalidPassword;
-        }
+        // if (passwordHash.Length < 8 || !Regex.IsMatch(passwordHash, @"^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$"))
+        // {
+        //     return UserErrors.InvalidPassword;
+        // }
 
         // Create a new User instance
         var user = new User(id, phoneNumber, name, email, passwordHash, null,null);
@@ -157,16 +157,16 @@ public class User:AuditableEntity
         return Result.Updated;
     }
 
-    public Result<Updated> UpdatePassword(string newPassword)
-    {
-        if (string.IsNullOrWhiteSpace(newPassword))
-            return UserErrors.PasswordIsRequired;
-        if (newPassword.Length < 8 || !Regex.IsMatch(newPassword, @"^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$"))
-        {
-            return UserErrors.InvalidPassword;
-        }
-        PasswordHash = newPassword;
-        return Result.Updated;
-    }
+    // public Result<Updated> UpdatePassword(string newPassword)
+    // {
+    //     if (string.IsNullOrWhiteSpace(newPassword))
+    //         return UserErrors.PasswordIsRequired;
+    //     if (newPassword.Length < 8 || !Regex.IsMatch(newPassword, @"^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$"))
+    //     {
+    //         return UserErrors.InvalidPassword;
+    //     }
+    //     PasswordHash = newPassword;
+    //     return Result.Updated;
+    // }
 
 }
