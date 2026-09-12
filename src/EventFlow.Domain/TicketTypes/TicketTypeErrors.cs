@@ -4,10 +4,20 @@ namespace EventFlow.Domain.TicketTypes;
 
 public static class TicketTypeErrors
 {
+    public static readonly Error EventIdRequired =
+        Error.Validation(
+            "TicketType.EventIdRequired",
+            "Event ID is required.");
+
+    public static readonly Error TenantIdRequired =
+        Error.Validation(
+            "TicketType.TenantIdRequired",
+            "Tenant ID is required.");
+
     public static readonly Error InvalidName =
         Error.Validation(
             "TicketType.InvalidName",
-            "Ticket type name is required.");
+            "Ticket type name is required and must be between 3 and 50 characters");
 
     public static readonly Error InvalidPrice =
         Error.Validation(
