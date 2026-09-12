@@ -9,7 +9,7 @@ public static class EventErrors
     public static readonly Error InvalidName =
         Error.Validation(
             "Event.InvalidName",
-            "Event name is required.");
+            "Event name is required, must be between 6 and 100 characters.");
 
     public static readonly Error InvalidLocation =
         Error.Validation(
@@ -99,4 +99,10 @@ public static class EventErrors
         Error.Conflict(
             "Event.CannotEdit",
             "The event cannot be modified in its current state.");
+
+    /////
+    public static readonly Error InvalidTenant =
+    Error.Validation(
+        "Event.InvalidTenant",
+        "A valid tenant is required.");
 }
