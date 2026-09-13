@@ -1,3 +1,4 @@
+using System.ComponentModel.DataAnnotations.Schema;
 using EventFlow.Domain.Common;
 using EventFlow.Domain.Common.Results;
 using EventFlow.Domain.Events;
@@ -16,6 +17,8 @@ public class TicketType:AuditableEntity
 
     public int Capacity { get; private set; }
     public int ReservedQuantity { get; private set; }
+    [NotMapped]
+    public int AvailableQuantity => Capacity - ReservedQuantity;
 
     public DateTime SalesStart { get; private set; }
     public DateTime SalesEnd { get; private set; }
@@ -124,5 +127,38 @@ public class TicketType:AuditableEntity
         SalesEnd = salesEnd;
 
         return Result.Updated;
+    }
+
+    public Result<Success> Reserve(int quantity)
+    {
+        if (quantity <= 0)
+            return TicketTypeErrors.InvalidQuantity;
+
+        var availableQuantity = Capacity - ReservedQuantity;
+
+        if (quantity > availableQuantity)
+            return TicketTypeErrors.InsufficientCapacity;
+
+        ReservedQuantity += quantity;
+
+        return Result.Success;
+    }
+
+    public Result<Success> Release(int quantity)
+    {
+        if (quantity <= 0)
+            return TicketTypeErrors.InvalidQuantity;
+
+        if (quantity > ReservedQuantity)
+            return TicketTypeErrors.InvalidReservation;
+
+        ReservedQuantity -= quantity;
+
+        return Result.Success;
+    }
+
+    public bool IsSalesOpen(DateTime now)
+    {
+        return now >= SalesStart && now <= SalesEnd;
     }
 }
