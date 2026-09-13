@@ -87,12 +87,41 @@ public class TicketType:AuditableEntity
         Name = name.Trim();
         return Result.Updated;
     }
-    public Result<Updated> UpdatePrice(decimal price)
+    public Result<Updated> UpdatePrice(decimal price,DateTime CurrentTime)
     {
         if (price < 0)
             return TicketTypeErrors.InvalidPrice;
+        if (CurrentTime >= SalesStart && CurrentTime <= SalesEnd)
+            return TicketTypeErrors.PriceCannotBeChangedDuringSales;
 
         Price = price;
+
+        return Result.Updated;
+    }
+
+    public Result<Updated> UpdateCapacity(int capacity)
+    {
+        if (capacity <= 0)
+            return TicketTypeErrors.InvalidCapacity;
+
+        if (capacity < ReservedQuantity)
+            return TicketTypeErrors.CapacityCannotBeReduced;
+
+        Capacity = capacity;
+
+        return Result.Updated;
+    }
+
+    public Result<Updated> UpdateSalesWindow(
+    DateTime salesStart,
+    DateTime salesEnd,DateTime currentDate)
+    {
+        if (salesStart >= salesEnd)
+            return TicketTypeErrors.InvalidSalesWindow;
+        if(salesStart <= currentDate && salesEnd >= currentDate)
+            return TicketTypeErrors.CannotModifyWhileSalesActive;
+        SalesStart = salesStart;
+        SalesEnd = salesEnd;
 
         return Result.Updated;
     }

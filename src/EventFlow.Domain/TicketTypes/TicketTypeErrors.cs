@@ -1,4 +1,5 @@
 using EventFlow.Domain.Common.Errors;
+using EventFlow.Domain.Common.Results;
 
 namespace EventFlow.Domain.TicketTypes;
 
@@ -58,4 +59,9 @@ public static class TicketTypeErrors
         Error.Validation(
             "TicketType.InvalidReservation",
             "The ticket reservation is invalid.");
+
+    public static readonly Error PriceCannotBeChangedDuringSales =
+        Error.Validation(
+            "TicketType.PriceCannotBeChangedDuringSales",
+            "Ticket type price cannot be changed during the sales period.");
 }
