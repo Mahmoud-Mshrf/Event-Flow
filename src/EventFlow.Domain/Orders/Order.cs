@@ -1,4 +1,6 @@
+using System.Data.Common;
 using EventFlow.Domain.Common;
+using EventFlow.Domain.Common.Results;
 using EventFlow.Domain.Events;
 using EventFlow.Domain.Orders.Enums;
 using EventFlow.Domain.Orders.OrderItems;
@@ -32,4 +34,34 @@ public class Order : AuditableEntity
 
     private Order() { } // EF Core
 
+    private Order(Guid id,Guid tenantId, Guid eventId, Guid attendeeId, string orderNumber, List<OrderItem> items):base(id)
+    {
+        TenantId = tenantId;
+        EventId = eventId;
+        AttendeeId = attendeeId;
+        OrderNumber = orderNumber;
+        OrderStatus = OrderStatus.Pending;
+        _orderItems.AddRange(items);
+        Total = items.Sum(i => i.Subtotal);
+    }
+
+    public static Result<Order> Create(Guid id,
+        Guid tenantId,
+        Guid eventId,
+        Guid attendeeId,
+        string orderNumber,
+        IReadOnlyCollection<(Guid id,Guid TicketTypeId, int Quantity, decimal UnitPrice)> requestedItems)
+    {
+        if (requestedItems is null || requestedItems.Count == 0)
+            return OrderErrors.NoItems;
+
+        if (requestedItems.Any(i => i.Quantity <= 0))
+            return OrderErrors.InvalidItemQuantity;
+
+        var items = requestedItems
+            .Select(i => OrderItem.Create(i.id,i.TicketTypeId, i.Quantity, i.UnitPrice))
+            .ToList();
+
+        return new Order(id,tenantId, eventId, attendeeId, orderNumber, items);
+    }
 }
