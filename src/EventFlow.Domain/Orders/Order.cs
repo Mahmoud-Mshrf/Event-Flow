@@ -34,4 +34,6 @@ public class Order:AuditableEntity
     public IReadOnlyCollection<OrderItem> OrderItems => _orderItems;
     private readonly List<Ticket> _tickets = [];
     public IReadOnlyCollection<Ticket> Tickets => _tickets;
+
+    
 }
