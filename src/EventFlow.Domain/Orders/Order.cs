@@ -64,4 +64,26 @@ public class Order : AuditableEntity
 
         return new Order(id,tenantId, eventId, attendeeId, orderNumber, items);
     }
+
+    public Result<Success> MarkAsExpired()
+    {
+        if (OrderStatus != OrderStatus.Pending)
+            return OrderErrors.CannotExpireNonPendingOrder;
+
+        OrderStatus = OrderStatus.Expired;
+        return Result.Success;
+    }
+
+    public Result<Success> Cancel()
+    {
+        if (OrderStatus != OrderStatus.Pending)
+            return OrderErrors.CannotCancelNonPendingOrder;
+
+        OrderStatus = OrderStatus.Cancelled;
+        return Result.Success;
+    }
+
+    public void AttachTicket(Ticket ticket) => _tickets.Add(ticket);
+
+    internal void AttachPayment(Payment payment) => _payments.Add(payment);
 }
