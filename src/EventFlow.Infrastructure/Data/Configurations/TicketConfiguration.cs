@@ -41,10 +41,10 @@ public class TicketConfiguration : IEntityTypeConfiguration<Ticket>
             .HasForeignKey(x => x.TicketTypeId)
             .OnDelete(DeleteBehavior.Restrict);
 
-        builder.HasOne(x => x.Order)
-            .WithMany(x => x.Tickets)
-            .HasForeignKey(x => x.OrderId)
-            .OnDelete(DeleteBehavior.Restrict);
+        // builder.HasOne(x => x.Order)
+        //     .WithMany(x => x.Tickets)
+        //     .HasForeignKey(x => x.OrderId)
+        //     .OnDelete(DeleteBehavior.Restrict);
     }
 }
 

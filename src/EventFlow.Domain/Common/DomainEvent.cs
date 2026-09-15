@@ -1,4 +1,4 @@
 using MediatR;
 
 namespace EventFlow.Domain.Common;
-public abstract class DomainEvent : INotification;
+public abstract record DomainEvent : INotification;

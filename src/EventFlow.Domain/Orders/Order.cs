@@ -3,6 +3,7 @@ using EventFlow.Domain.Common;
 using EventFlow.Domain.Common.Results;
 using EventFlow.Domain.Events;
 using EventFlow.Domain.Orders.Enums;
+using EventFlow.Domain.Orders.Events;
 using EventFlow.Domain.Orders.OrderItems;
 using EventFlow.Domain.Payments;
 using EventFlow.Domain.Tickets;
@@ -26,15 +27,10 @@ public class Order : AuditableEntity
     private readonly List<OrderItem> _orderItems = [];
     public IReadOnlyCollection<OrderItem> OrderItems => _orderItems.AsReadOnly();
 
-    private readonly List<Payment> _payments = [];
-    public IReadOnlyCollection<Payment> Payments => _payments.AsReadOnly();
-
-    private readonly List<Ticket> _tickets = [];
-    public IReadOnlyCollection<Ticket> Tickets => _tickets.AsReadOnly();
-
     private Order() { } // EF Core
 
-    private Order(Guid id,Guid tenantId, Guid eventId, Guid attendeeId, string orderNumber, List<OrderItem> items):base(id)
+    private Order(Guid id, Guid tenantId, Guid eventId, Guid attendeeId, string orderNumber, List<OrderItem> items)
+        : base(id)
     {
         TenantId = tenantId;
         EventId = eventId;
@@ -45,12 +41,13 @@ public class Order : AuditableEntity
         Total = items.Sum(i => i.Subtotal);
     }
 
-    public static Result<Order> Create(Guid id,
+    public static Result<Order> Create(
+        Guid id,
         Guid tenantId,
         Guid eventId,
         Guid attendeeId,
         string orderNumber,
-        IReadOnlyCollection<(Guid id,Guid tenantId,Guid TicketTypeId, int Quantity, decimal UnitPrice)> requestedItems)
+        IReadOnlyCollection<(Guid Id,Guid tenantId, Guid TicketTypeId, int Quantity, decimal UnitPrice)> requestedItems)
     {
         if (requestedItems is null || requestedItems.Count == 0)
             return OrderErrors.NoItems;
@@ -59,19 +56,10 @@ public class Order : AuditableEntity
             return OrderErrors.InvalidItemQuantity;
 
         var items = requestedItems
-            .Select(i => OrderItem.Create(i.id,i.tenantId,i.TicketTypeId, i.Quantity, i.UnitPrice))
+            .Select(i => OrderItem.Create(i.Id,i.tenantId ,i.TicketTypeId, i.Quantity, i.UnitPrice))
             .ToList();
 
-        return new Order(id,tenantId, eventId, attendeeId, orderNumber, items);
-    }
-
-    public Result<Success> MarkAsExpired()
-    {
-        if (OrderStatus != OrderStatus.Pending)
-            return OrderErrors.CannotExpireNonPendingOrder;
-
-        OrderStatus = OrderStatus.Expired;
-        return Result.Success;
+        return new Order(id, tenantId, eventId, attendeeId, orderNumber, items);
     }
 
     public Result<Success> MarkAsPaid(DateTime paidAtUtc)
@@ -81,6 +69,19 @@ public class Order : AuditableEntity
 
         OrderStatus = OrderStatus.Paid;
         PaidAt = paidAtUtc;
+
+        return Result.Success;
+    }
+
+    public Result<Success> MarkAsExpired()
+    {
+        if (OrderStatus != OrderStatus.Pending)
+            return OrderErrors.CannotExpireNonPendingOrder;
+
+        OrderStatus = OrderStatus.Expired;
+
+        AddDomainEvent(new OrderExpiredDomainEvent(Id, TenantId, ReservedItems()));
+
         return Result.Success;
     }
 
@@ -90,10 +91,13 @@ public class Order : AuditableEntity
             return OrderErrors.CannotCancelNonPendingOrder;
 
         OrderStatus = OrderStatus.Cancelled;
+
+        AddDomainEvent(new OrderCancelledDomainEvent(Id, TenantId, ReservedItems()));
+
         return Result.Success;
     }
 
-    public void AttachTicket(Ticket ticket) => _tickets.Add(ticket);
-
-    internal void AttachPayment(Payment payment) => _payments.Add(payment);
+    private IReadOnlyCollection<(Guid TicketTypeId, int Quantity)> ReservedItems() =>
+        _orderItems.Select(i => (i.TicketTypeId, i.Quantity)).ToList();
 }
+

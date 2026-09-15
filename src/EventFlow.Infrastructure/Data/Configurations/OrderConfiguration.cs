@@ -28,9 +28,6 @@ public class OrderConfiguration : IEntityTypeConfiguration<Order>
             .HasPrecision(18, 2)
             .IsRequired();
 
-        builder.Property(x => x.CreatedAt)
-            .IsRequired();
-
         builder.HasOne(x => x.Event)
             .WithMany(x => x.Orders)
             .HasForeignKey(x => x.EventId)
@@ -51,9 +48,9 @@ public class OrderConfiguration : IEntityTypeConfiguration<Order>
             .HasForeignKey(x => x.OrderId)
             .OnDelete(DeleteBehavior.Cascade);
 
-        builder.HasOne(x => x.Payment)
-            .WithOne(x => x.Order)
-            .HasForeignKey<Payment>(x => x.OrderId)
-            .OnDelete(DeleteBehavior.Cascade);
+        // builder.HasOne(x => x.Payment)
+        //     .WithOne(x => x.Order)
+        //     .HasForeignKey<Payment>(x => x.OrderId)
+        //     .OnDelete(DeleteBehavior.Cascade);
     }
 }
