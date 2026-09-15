@@ -74,6 +74,16 @@ public class Order : AuditableEntity
         return Result.Success;
     }
 
+    public Result<Success> MarkAsPaid(DateTime paidAtUtc)
+    {
+        if (OrderStatus != OrderStatus.Pending)
+            return OrderErrors.CannotPayNonPendingOrder;
+
+        OrderStatus = OrderStatus.Paid;
+        PaidAt = paidAtUtc;
+        return Result.Success;
+    }
+
     public Result<Success> Cancel()
     {
         if (OrderStatus != OrderStatus.Pending)
