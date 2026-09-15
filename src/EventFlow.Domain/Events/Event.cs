@@ -88,6 +88,11 @@ public class Event : AuditableEntity
             eventName.Length > 100)
             return EventErrors.InvalidName;
 
+        if (description is not null &&
+           (description.Length < 6 || description.Length > 500))
+            {
+                return TenantErrors.InvalidDescription;
+            }
         location = location.Trim();
 
         if (string.IsNullOrWhiteSpace(location))
@@ -140,9 +145,11 @@ public class Event : AuditableEntity
 
         EventName = eventName;
 
-        Description = string.IsNullOrWhiteSpace(description)
-            ? null
-            : description.Trim();
+        if (description is not null &&
+           (description.Length < 6 || description.Length > 500))
+           {
+               return TenantErrors.InvalidDescription;
+           }
 
         return Result.Updated;
     }

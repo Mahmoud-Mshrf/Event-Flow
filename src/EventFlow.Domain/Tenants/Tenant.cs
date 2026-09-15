@@ -30,7 +30,7 @@ public class Tenant:AuditableEntity
     {
         if (string.IsNullOrWhiteSpace(name)|| name.Length < 6 || name.Length > 100)
         {
-            return UserErrors.InvalidName;
+            return UserErrors.InvalidName;   // should be TenantErrors.InvalidName
         }
 
         return new Tenant(Id,name, description);
