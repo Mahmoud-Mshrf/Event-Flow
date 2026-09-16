@@ -9,7 +9,7 @@ using EventFlow.Domain.Users.Enums;
 
 namespace EventFlow.Domain.Users;
 
-public class User:AuditableEntity
+public class User : AuditableEntity
 {
     public string PhoneNumber { get; private set; } = null!;
     public Guid? TenantId { get; private set; }
@@ -18,12 +18,8 @@ public class User:AuditableEntity
     public string PasswordHash { get; private set; } = null!;
     public UserRole? Role { get; private set; }
     public bool Disabled { get; private set; }
-    // Navigation properties
+
     public Tenant? Tenant { get; private set; }
-    private readonly List<Ticket> _tickets = [];
-    public IReadOnlyCollection<Ticket> Tickets => _tickets;
-    private readonly List<Order> _orders = [];
-    public IReadOnlyCollection<Order> Orders => _orders;
 
     private User(Guid id, string phoneNumber, string name, string email, string passwordHash, UserRole? role, Guid? tenantId)
         : base(id)
@@ -33,64 +29,52 @@ public class User:AuditableEntity
         Email = email;
         PasswordHash = passwordHash;
         Role = role;
-        Disabled = false;
         TenantId = tenantId;
+        Disabled = false;
     }
 
-    public static Result<User> CreateEmployee(Guid id, string phoneNumber, string name, string email, string passwordHash, UserRole? role, bool disabled, Guid? tenantId)
+    public static Result<User> CreateStaff(
+        Guid id, string phoneNumber, string name, string email, string passwordHash,
+        UserRole role, Guid tenantId)
     {
-        // Validate the input parameters
-        if (string.IsNullOrWhiteSpace(phoneNumber) || !Regex.IsMatch(phoneNumber, @"^\+?\d{7,15}$"))
-        {
-            return UserErrors.InvalidPhoneNumber;
-        }
-        if (string.IsNullOrWhiteSpace(name))
-            return UserErrors.NameIsRequired;
-        if(name.Length < 6 || name.Length > 100)
-            return UserErrors.InvalidName;
-        if (string.IsNullOrWhiteSpace(email))
-            return UserErrors.EmailIsRequired;
-        try
-        {
-            var addr = new System.Net.Mail.MailAddress(email);
-            if (addr.Address != email)
-                return UserErrors.InvalidEmail;
-        }
-        catch
-        {
-            return UserErrors.InvalidEmail;
-        }
-        if (string.IsNullOrWhiteSpace(passwordHash))
-            return UserErrors.PasswordIsRequired;
-        // if (passwordHash.Length < 8 || !Regex.IsMatch(passwordHash, @"^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$"))
-        // {
-        //     return UserErrors.InvalidPassword;
-        // }
-        if(role != null && !Enum.IsDefined(typeof(UserRole), role))
-        {
+        var validation = ValidateCommonFields(phoneNumber, name, email, passwordHash);
+        if (validation.IsError)
+            return validation.TopError;
+
+        if (tenantId == Guid.Empty)
+            return UserErrors.TenantIdRequired;
+
+        if (!Enum.IsDefined(typeof(UserRole), role))
             return UserErrors.InvalidRole;
-        }
-        // Create a new User instance
-        var user = new User(id, phoneNumber, name, email, passwordHash, role,tenantId);
 
-        // Raise a domain event for user creation
-        // user.AddDomainEvent(new UserCreatedEvent(user.Id));
-
-        return user;
+        return new User(id, phoneNumber, name, email, passwordHash, role, tenantId);
     }
-    public static Result<User> CreateAttendee(Guid id, string phoneNumber, string name, string email, string passwordHash)
+
+    public static Result<User> CreateAttendee(
+        Guid id, string phoneNumber, string name, string email, string passwordHash)
     {
-        // Validate the input parameters
+        var validation = ValidateCommonFields(phoneNumber, name, email, passwordHash);
+        if (validation.IsError)
+            return validation.TopError;
+
+        return new User(id, phoneNumber, name, email, passwordHash, role: null, tenantId: null);
+    }
+
+    private static Result<Success> ValidateCommonFields(
+        string phoneNumber, string name, string email, string passwordHash)
+    {
         if (string.IsNullOrWhiteSpace(phoneNumber) || !Regex.IsMatch(phoneNumber, @"^\+?\d{7,15}$"))
-        {
             return UserErrors.InvalidPhoneNumber;
-        }
+
         if (string.IsNullOrWhiteSpace(name))
             return UserErrors.NameIsRequired;
-        if(name.Length < 6 || name.Length > 100)
+
+        if (name.Length < 6 || name.Length > 100)
             return UserErrors.InvalidName;
+
         if (string.IsNullOrWhiteSpace(email))
             return UserErrors.EmailIsRequired;
+
         try
         {
             var addr = new System.Net.Mail.MailAddress(email);
@@ -101,46 +85,39 @@ public class User:AuditableEntity
         {
             return UserErrors.InvalidEmail;
         }
+
         if (string.IsNullOrWhiteSpace(passwordHash))
             return UserErrors.PasswordIsRequired;
-        // if (passwordHash.Length < 8 || !Regex.IsMatch(passwordHash, @"^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$"))
-        // {
-        //     return UserErrors.InvalidPassword;
-        // }
 
-        // Create a new User instance
-        var user = new User(id, phoneNumber, name, email, passwordHash, null,null);
-
-        // Raise a domain event for user creation
-        // user.AddDomainEvent(new UserCreatedEvent(user.Id));
-
-        return user;
+        return Result.Success;
     }
 
     public Result<Updated> UpdatePhoneNumber(string phoneNumber)
     {
         if (string.IsNullOrWhiteSpace(phoneNumber) || !Regex.IsMatch(phoneNumber, @"^\+?\d{7,15}$"))
-        {
             return UserErrors.InvalidPhoneNumber;
-        }
+
         PhoneNumber = phoneNumber;
         return Result.Updated;
     }
+
     public Result<Updated> UpdateName(string name)
     {
-        if (string.IsNullOrWhiteSpace(name))
-            return UserErrors.NameIsRequired;
-        if(name.Length < 6 || name.Length > 100)
+        if (string.IsNullOrWhiteSpace(name) || name.Length < 6 || name.Length > 100)
             return UserErrors.InvalidName;
+
         Name = name;
         return Result.Updated;
     }
-    public Result<Updated> ChangeRole(UserRole? role)
+
+    public Result<Updated> ChangeRole(UserRole role)
     {
-        if(role != null && !Enum.IsDefined(typeof(UserRole), role))
-        {
+        if (TenantId is null)
+            return UserErrors.CannotAssignRoleToAttendee;
+
+        if (!Enum.IsDefined(typeof(UserRole), role))
             return UserErrors.InvalidRole;
-        }
+
         Role = role;
         return Result.Updated;
     }
@@ -156,17 +133,4 @@ public class User:AuditableEntity
         Disabled = false;
         return Result.Updated;
     }
-
-    // public Result<Updated> UpdatePassword(string newPassword)
-    // {
-    //     if (string.IsNullOrWhiteSpace(newPassword))
-    //         return UserErrors.PasswordIsRequired;
-    //     if (newPassword.Length < 8 || !Regex.IsMatch(newPassword, @"^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$"))
-    //     {
-    //         return UserErrors.InvalidPassword;
-    //     }
-    //     PasswordHash = newPassword;
-    //     return Result.Updated;
-    // }
-
 }

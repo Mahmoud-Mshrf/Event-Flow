@@ -13,5 +13,6 @@ public static class UserErrors
     public static readonly Error PhoneNumberIsRequired = Error.Validation("User.PhoneNumberIsRequired", "The phone number is required.");
     public static readonly Error NameIsRequired = Error.Validation("User.NameIsRequired", "The name is required.");
     public static readonly Error PasswordIsRequired = Error.Validation("User.PasswordIsRequired", "The password is required.");
-
+    public static readonly Error CannotAssignRoleToAttendee = Error.Validation("User.CannotAssignRoleToAttendee", "Cannot assign a role to an attendee.");
+    public static readonly Error TenantIdRequired = Error.Validation("User.TenantIdRequired", "Tenant ID is required for this operation.");
 } 
