@@ -33,10 +33,10 @@ public class OrderConfiguration : IEntityTypeConfiguration<Order>
             .HasForeignKey(x => x.EventId)
             .OnDelete(DeleteBehavior.Restrict);
 
-        builder.HasOne(x => x.Attendee)
-            .WithMany(x => x.Orders)
-            .HasForeignKey(x => x.AttendeeId)
-            .OnDelete(DeleteBehavior.Restrict);
+        // builder.HasOne(x => x.Attendee)
+        //     .WithMany(x => x.Orders)
+        //     .HasForeignKey(x => x.AttendeeId)
+        //     .OnDelete(DeleteBehavior.Restrict);
 
         // builder.HasMany("OrderItems")
         //     .WithOne("Order")

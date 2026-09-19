@@ -17,7 +17,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> options,ICurrentTenant 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
-        modelBuilder.ApplyConfigurationsFromAssembly(typeof(AppContext).Assembly);
+        modelBuilder.ApplyConfigurationsFromAssembly(typeof(AppDbContext).Assembly);
 
         modelBuilder.Entity<Event>().HasQueryFilter(x=>x.TenantId.ToString()==tenant.TenantId);
         modelBuilder.Entity<Order>().HasQueryFilter(x=>x.TenantId.ToString()==tenant.TenantId);
@@ -25,6 +25,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> options,ICurrentTenant 
         modelBuilder.Entity<Ticket>().HasQueryFilter(x=>x.TenantId.ToString()==tenant.TenantId);
         modelBuilder.Entity<TicketType>().HasQueryFilter(x=>x.TenantId.ToString()==tenant.TenantId);
         modelBuilder.Entity<OrderItem>().HasQueryFilter(x=>x.TenantId.ToString()==tenant.TenantId);
+        modelBuilder.Entity<Payment>().HasQueryFilter(x=>x.TenantId.ToString()==tenant.TenantId);
     }
     public DbSet<Ticket> Tickets => Set<Ticket>();
     public DbSet<TicketType> TicketTypes => Set<TicketType>();
