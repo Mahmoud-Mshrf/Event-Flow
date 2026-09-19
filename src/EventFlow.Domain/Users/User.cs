@@ -122,6 +122,15 @@ public class User : AuditableEntity
         return Result.Updated;
     }
 
+    public Result<Success> ResetPassword(string newPasswordHash)
+    {
+        if (string.IsNullOrWhiteSpace(newPasswordHash))
+            return UserErrors.PasswordIsRequired;
+
+        PasswordHash = newPasswordHash;
+        return Result.Success;
+    }
+
     public Result<Updated> Disable()
     {
         Disabled = true;

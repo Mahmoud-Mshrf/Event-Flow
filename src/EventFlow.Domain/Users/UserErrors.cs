@@ -1,4 +1,5 @@
 using EventFlow.Domain.Common.Errors;
+using EventFlow.Domain.Common.Results;
 
 namespace EventFlow.Domain.Users;
 
@@ -15,4 +16,5 @@ public static class UserErrors
     public static readonly Error PasswordIsRequired = Error.Validation("User.PasswordIsRequired", "The password is required.");
     public static readonly Error CannotAssignRoleToAttendee = Error.Validation("User.CannotAssignRoleToAttendee", "Cannot assign a role to an attendee.");
     public static readonly Error TenantIdRequired = Error.Validation("User.TenantIdRequired", "Tenant ID is required for this operation.");
+    public static readonly Error EmailAlreadyInUse = Error.Conflict("User.EmailAlreadyInUse", "The email is already in use.");
 } 
