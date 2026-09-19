@@ -1,5 +1,6 @@
 using EventFlow.Application.Common.Interfaces;
 using EventFlow.Domain.Events;
+using EventFlow.Domain.Identity;
 using EventFlow.Domain.Orders;
 using EventFlow.Domain.Orders.OrderItems;
 using EventFlow.Domain.Payments;
@@ -12,7 +13,7 @@ using Microsoft.Extensions.Options;
 
 namespace EventFlow.Infrastructure.Data;
 
-public class AppDbContext(DbContextOptions<AppDbContext> options,ICurrentTenant tenant) : DbContext(options)
+public class AppDbContext(DbContextOptions<AppDbContext> options,ICurrentTenant tenant) : DbContext(options), IAppDbContext
 {
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -35,4 +36,8 @@ public class AppDbContext(DbContextOptions<AppDbContext> options,ICurrentTenant 
     public DbSet<Order> Orders => Set<Order>();
     public DbSet<OrderItem> OrderItems => Set<OrderItem>();
     public DbSet<Payment> Payment => Set<Payment>();
+
+    public DbSet<Payment> Payments => Set<Payment>();
+
+    public DbSet<VerificationToken> VerificationTokens => Set<VerificationToken>();
 }
