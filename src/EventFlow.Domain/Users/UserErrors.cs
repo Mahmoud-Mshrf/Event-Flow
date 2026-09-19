@@ -17,4 +17,7 @@ public static class UserErrors
     public static readonly Error CannotAssignRoleToAttendee = Error.Validation("User.CannotAssignRoleToAttendee", "Cannot assign a role to an attendee.");
     public static readonly Error TenantIdRequired = Error.Validation("User.TenantIdRequired", "Tenant ID is required for this operation.");
     public static readonly Error EmailAlreadyInUse = Error.Conflict("User.EmailAlreadyInUse", "The email is already in use.");
+    // In UserErrors
+    public static readonly Error EmailAlreadyConfirmed = Error.Validation("User.EmailAlreadyConfirmed", "This email address has already been confirmed.");
+    public static readonly Error EmailNotConfirmed = Error.Validation("User.EmailNotConfirmed", "Please confirm your email address before logging in.");
 } 

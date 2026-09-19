@@ -18,6 +18,7 @@ public class User : AuditableEntity
     public string PasswordHash { get; private set; } = null!;
     public UserRole? Role { get; private set; }
     public bool Disabled { get; private set; }
+    public bool EmailConfirmed { get; private set; }
 
     public Tenant? Tenant { get; private set; }
 
@@ -91,7 +92,14 @@ public class User : AuditableEntity
 
         return Result.Success;
     }
+    public Result<Success> ConfirmEmail()
+    {
+        if (EmailConfirmed)
+            return UserErrors.EmailAlreadyConfirmed;
 
+        EmailConfirmed = true;
+        return Result.Success;
+    }
     public Result<Updated> UpdatePhoneNumber(string phoneNumber)
     {
         if (string.IsNullOrWhiteSpace(phoneNumber) || !Regex.IsMatch(phoneNumber, @"^\+?\d{7,15}$"))
