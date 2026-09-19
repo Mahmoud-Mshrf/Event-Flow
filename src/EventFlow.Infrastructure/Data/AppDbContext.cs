@@ -40,6 +40,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> options,ICurrentTenant 
     public DbSet<Payment> Payment => Set<Payment>();
     public DbSet<Payment> Payments => Set<Payment>();
     public DbSet<VerificationToken> VerificationTokens => Set<VerificationToken>();
+    public DbSet<RefreshToken> RefreshTokens => Set<RefreshToken>();
     public override async Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
 {
     // Collect all domain events before saving

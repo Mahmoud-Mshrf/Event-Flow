@@ -22,5 +22,6 @@ public interface IAppDbContext
     DbSet<OrderItem> OrderItems {get;}
     DbSet<Payment> Payments {get;}
     DbSet<VerificationToken> VerificationTokens {get;}
+    DbSet<RefreshToken> RefreshTokens {get;}
     Task<int> SaveChangesAsync(CancellationToken cancellationToken);
 }
