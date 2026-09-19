@@ -17,4 +17,6 @@ public static class VerificationTokenErrors
         Error.Validation(
             "VerificationToken.InvalidCode",
             "The verification code is invalid.");
+
+    public static readonly Error NotFound = Error.NotFound("VerificationToken.NotFound", "No verification token was found with the provided details.");
 }

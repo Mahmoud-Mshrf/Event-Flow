@@ -20,4 +20,5 @@ public static class UserErrors
     // In UserErrors
     public static readonly Error EmailAlreadyConfirmed = Error.Validation("User.EmailAlreadyConfirmed", "This email address has already been confirmed.");
     public static readonly Error EmailNotConfirmed = Error.Validation("User.EmailNotConfirmed", "Please confirm your email address before logging in.");
+    public static readonly Error NotFound = Error.NotFound("User.NotFound", "No user was found with the provided details.");
 } 
