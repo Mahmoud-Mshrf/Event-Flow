@@ -4,7 +4,7 @@ using EventFlow.Domain.Common.Results;
 using FluentValidation;
 using MediatR;
 
-namespace EventFlow.Application.Behaviors;
+namespace EventFlow.Application.Common.Behaviors;
 
 public sealed class ValidationPipelineBehavior<TRequest, TResponse>(
     IEnumerable<IValidator<TRequest>> validators)

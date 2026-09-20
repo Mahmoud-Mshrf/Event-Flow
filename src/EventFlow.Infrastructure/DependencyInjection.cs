@@ -1,7 +1,10 @@
 using System.Text;
 using EventFlow.Application.Common.Interfaces;
+using EventFlow.Domain.Users.Enums;
 using EventFlow.Infrastructure.Data;
 using EventFlow.Infrastructure.Services;
+using FluentValidation;
+using MediatR;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
@@ -19,7 +22,9 @@ public static class DependencyInjection
         var connectionString = configuration.GetConnectionString("DefaultConnection");
         services.AddDbContext<AppDbContext>(options =>
             options.UseSqlServer(connectionString));
+
         services.AddScoped<IAppDbContext>(provider => provider.GetRequiredService<AppDbContext>());
+
         services.AddAuthentication(options =>
         {
             options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
@@ -40,7 +45,8 @@ public static class DependencyInjection
         });
         services.AddScoped<ITokenService, JwtTokenService>();
         services.AddScoped<IPasswordHasher, PasswordHasher>();
-        
+        services.AddScoped<IEmailSender, SmtpEmailSender>(); // or LogEmailSender for dev
+
         services.Configure<JwtSettings>(
             configuration.GetSection("JwtSettings"));
 
@@ -52,6 +58,24 @@ public static class DependencyInjection
         services.AddHttpContextAccessor();
         services.AddScoped<ICurrentUser, CurrentUser>();
         services.AddScoped<ICurrentTenant,CurrentTenant>();
+
+                // Authorization policies
+        services.AddAuthorization(options =>
+        {
+            options.AddPolicy("TenantOwner", policy =>
+                policy.RequireAuthenticatedUser()
+                    .RequireRole(UserRole.Owner.ToString()));
+
+            options.AddPolicy("TenantStaff", policy =>
+                policy.RequireAuthenticatedUser()
+                    .RequireClaim("tenant_id"));
+
+            options.AddPolicy("CheckInStaff", policy =>
+                policy.RequireAuthenticatedUser()
+                    .RequireRole(UserRole.Employee.ToString())
+                    .RequireClaim("tenant_id"));
+        });
+
         return services;
     }
 }
