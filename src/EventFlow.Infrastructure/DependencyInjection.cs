@@ -48,6 +48,10 @@ public static class DependencyInjection
             sp.GetRequiredService<
                 Microsoft.Extensions.Options.IOptions<JwtSettings>>()
                 .Value);
+
+        services.AddHttpContextAccessor();
+        services.AddScoped<ICurrentUser, CurrentUser>();
+        services.AddScoped<ICurrentTenant,CurrentTenant>();
         return services;
     }
 }

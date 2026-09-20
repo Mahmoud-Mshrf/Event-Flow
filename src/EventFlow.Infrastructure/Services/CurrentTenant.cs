@@ -1,7 +1,8 @@
 using System.Security.Claims;
 using EventFlow.Application.Common.Interfaces;
+using Microsoft.AspNetCore.Http;
 
-namespace EventFlow.Api.Services;
+namespace EventFlow.Infrastructure.Services;
 
 public class CurrentTenant(IHttpContextAccessor httpContextAccessor) : ICurrentTenant
 {
