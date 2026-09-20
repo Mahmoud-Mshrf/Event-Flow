@@ -1,0 +1,351 @@
+Smart move — having both approaches available and knowing how to switch between them is a genuine interview talking point.
+
+## The minimal API infrastructure
+
+**`ProblemExtensions.cs`** — configured against your actual `Error` class:
+
+```csharp
+namespace EventFlow.Api.Extensions;
+
+public static class ProblemExtensions
+{
+    public static IResult ToProblem(this List<Error> errors)
+    {
+        if (errors.Count == 0)
+            return Results.Problem();
+
+        if (errors.All(e => e.Type == ErrorType.Validation))
+            return ValidationProblem(errors);
+
+        return Problem(errors[0]);
+    }
+
+    private static IResult Problem(Error error)
+    {
+        var statusCode = error.Type switch
+        {
+            ErrorType.Validation   => StatusCodes.Status422UnprocessableEntity,
+            ErrorType.Conflict     => StatusCodes.Status409Conflict,
+            ErrorType.NotFound     => StatusCodes.Status404NotFound,
+            ErrorType.Unauthorized => StatusCodes.Status401Unauthorized,
+            ErrorType.Forbidden    => StatusCodes.Status403Forbidden,
+            ErrorType.Failure      => StatusCodes.Status400BadRequest,
+            ErrorType.Unexpected   => StatusCodes.Status500InternalServerError,
+            _                      => StatusCodes.Status500InternalServerError,
+        };
+
+        return Results.Problem(
+            statusCode: statusCode,
+            title: error.Code,
+            detail: error.Description);
+    }
+
+    private static IResult ValidationProblem(List<Error> errors)
+    {
+        var errorsDict = errors.ToDictionary(
+            e => e.Code,
+            e => new[] { e.Description });
+
+        return Results.ValidationProblem(
+            errorsDict,
+            statusCode: StatusCodes.Status422UnprocessableEntity);
+    }
+}
+```
+
+**How you'd use it in a minimal endpoint:**
+
+```csharp
+app.MapPost("/api/auth/login", async (
+    LoginCommand command,
+    ISender sender,
+    CancellationToken ct) =>
+{
+    var result = await sender.Send(command, ct);
+
+    return result.IsSuccess
+        ? Results.Ok(result.Value)
+        : result.Errors!.ToProblem();
+});
+```
+
+---
+
+## How to organize minimal API endpoints cleanly
+
+Dumping all `app.Map...` calls into `Program.cs` gets messy fast. The standard pattern is an `IEndpointGroup` interface that each feature module implements:
+
+```csharp
+namespace EventFlow.Api.Abstractions;
+
+public interface IEndpointGroup
+{
+    void MapEndpoints(RouteGroupBuilder group);
+}
+```
+
+Each module implements it:
+
+```csharp
+namespace EventFlow.Api.Endpoints;
+
+public sealed class AuthEndpoints : IEndpointGroup
+{
+    public void MapEndpoints(RouteGroupBuilder group)
+    {
+        group.MapPost("/register/attendee", RegisterAttendee)
+            .AllowAnonymous()
+            .WithName("RegisterAttendee")
+            .WithSummary("Register a new attendee account.")
+            .Produces(StatusCodes.Status204NoContent)
+            .ProducesProblem(StatusCodes.Status409Conflict)
+            .ProducesValidationProblem(StatusCodes.Status422UnprocessableEntity);
+
+        group.MapPost("/register/organizer", RegisterOrganizer)
+            .AllowAnonymous()
+            .WithName("RegisterOrganizer")
+            .WithSummary("Register a new organizer account and organization.")
+            .Produces(StatusCodes.Status204NoContent)
+            .ProducesProblem(StatusCodes.Status409Conflict)
+            .ProducesValidationProblem(StatusCodes.Status422UnprocessableEntity);
+
+        group.MapPost("/confirm-email", ConfirmEmail)
+            .AllowAnonymous()
+            .WithName("ConfirmEmail")
+            .WithSummary("Confirm email using the OTP sent at registration.")
+            .Produces(StatusCodes.Status204NoContent)
+            .ProducesValidationProblem(StatusCodes.Status422UnprocessableEntity);
+
+        group.MapPost("/resend-confirmation", ResendEmailConfirmation)
+            .AllowAnonymous()
+            .WithName("ResendEmailConfirmation")
+            .WithSummary("Resend the email confirmation OTP.")
+            .Produces(StatusCodes.Status204NoContent);
+
+        group.MapPost("/login", Login)
+            .AllowAnonymous()
+            .WithName("Login")
+            .WithSummary("Login and receive access and refresh tokens.")
+            .Produces<LoginResponse>(StatusCodes.Status200OK)
+            .ProducesProblem(StatusCodes.Status401Unauthorized)
+            .ProducesValidationProblem(StatusCodes.Status422UnprocessableEntity);
+
+        group.MapPost("/refresh", RefreshToken)
+            .AllowAnonymous()
+            .WithName("RefreshToken")
+            .WithSummary("Rotate a refresh token and receive a new access token.")
+            .Produces<LoginResponse>(StatusCodes.Status200OK)
+            .ProducesProblem(StatusCodes.Status401Unauthorized);
+
+        group.MapPost("/logout", Logout)
+            .RequireAuthorization()
+            .WithName("Logout")
+            .WithSummary("Revoke the current session's refresh token.")
+            .Produces(StatusCodes.Status204NoContent)
+            .ProducesProblem(StatusCodes.Status401Unauthorized);
+
+        group.MapPost("/forgot-password", RequestPasswordReset)
+            .AllowAnonymous()
+            .WithName("RequestPasswordReset")
+            .WithSummary("Request a password reset OTP.")
+            .Produces(StatusCodes.Status204NoContent);
+
+        group.MapPost("/reset-password", ResetPassword)
+            .AllowAnonymous()
+            .WithName("ResetPassword")
+            .WithSummary("Reset password and revoke all active sessions.")
+            .Produces(StatusCodes.Status204NoContent)
+            .ProducesProblem(StatusCodes.Status401Unauthorized)
+            .ProducesValidationProblem(StatusCodes.Status422UnprocessableEntity);
+    }
+
+    private static async Task<IResult> RegisterAttendee(
+        RegisterAttendeeCommand command, ISender sender, CancellationToken ct)
+    {
+        var result = await sender.Send(command, ct);
+        return result.IsSuccess ? Results.NoContent() : result.Errors!.ToProblem();
+    }
+
+    private static async Task<IResult> RegisterOrganizer(
+        RegisterOrganizerCommand command, ISender sender, CancellationToken ct)
+    {
+        var result = await sender.Send(command, ct);
+        return result.IsSuccess ? Results.NoContent() : result.Errors!.ToProblem();
+    }
+
+    private static async Task<IResult> ConfirmEmail(
+        ConfirmEmailCommand command, ISender sender, CancellationToken ct)
+    {
+        var result = await sender.Send(command, ct);
+        return result.IsSuccess ? Results.NoContent() : result.Errors!.ToProblem();
+    }
+
+    private static async Task<IResult> ResendEmailConfirmation(
+        ResendEmailConfirmationCommand command, ISender sender, CancellationToken ct)
+    {
+        var result = await sender.Send(command, ct);
+        return result.IsSuccess ? Results.NoContent() : result.Errors!.ToProblem();
+    }
+
+    private static async Task<IResult> Login(
+        LoginCommand command, ISender sender, CancellationToken ct)
+    {
+        var result = await sender.Send(command, ct);
+        return result.IsSuccess ? Results.Ok(result.Value) : result.Errors!.ToProblem();
+    }
+
+    private static async Task<IResult> RefreshToken(
+        RefreshTokenCommand command, ISender sender, CancellationToken ct)
+    {
+        var result = await sender.Send(command, ct);
+        return result.IsSuccess ? Results.Ok(result.Value) : result.Errors!.ToProblem();
+    }
+
+    private static async Task<IResult> Logout(
+        LogoutCommand command, ISender sender, CancellationToken ct)
+    {
+        var result = await sender.Send(command, ct);
+        return result.IsSuccess ? Results.NoContent() : result.Errors!.ToProblem();
+    }
+
+    private static async Task<IResult> RequestPasswordReset(
+        RequestPasswordResetCommand command, ISender sender, CancellationToken ct)
+    {
+        var result = await sender.Send(command, ct);
+        return result.IsSuccess ? Results.NoContent() : result.Errors!.ToProblem();
+    }
+
+    private static async Task<IResult> ResetPassword(
+        ResetPasswordCommand command, ISender sender, CancellationToken ct)
+    {
+        var result = await sender.Send(command, ct);
+        return result.IsSuccess ? Results.NoContent() : result.Errors!.ToProblem();
+    }
+}
+```
+
+**Auto-registration extension** — scans the assembly and registers every `IEndpointGroup` automatically, so you never have to manually wire new modules in `Program.cs`:
+
+```csharp
+namespace EventFlow.Api.Extensions;
+
+public static class EndpointExtensions
+{
+    public static WebApplication MapEndpointGroups(this WebApplication app)
+    {
+        var endpointGroups = typeof(IEndpointGroup).Assembly
+            .GetTypes()
+            .Where(t => t.IsClass && !t.IsAbstract && t.IsAssignableTo(typeof(IEndpointGroup)))
+            .Select(Activator.CreateInstance)
+            .Cast<IEndpointGroup>();
+
+        foreach (var endpointGroup in endpointGroups)
+        {
+            // Derive the route prefix from the class name
+            // AuthEndpoints → /api/auth
+            // EventEndpoints → /api/events
+            var groupName = endpointGroup.GetType().Name
+                .Replace("Endpoints", string.Empty)
+                .ToLowerInvariant();
+
+            var group = app.MapGroup($"/api/{groupName}")
+                .WithTags(groupName);
+
+            endpointGroup.MapEndpoints(group);
+        }
+
+        return app;
+    }
+}
+```
+
+---
+
+## `Program.cs` — switching between the two approaches
+
+This is the key part. Everything above `// --- APPROACH CHOICE ---` is identical regardless of which you use:
+
+```csharp
+var builder = WebApplication.CreateBuilder(args);
+
+// ── Shared registrations — same for both approaches ──────────────────────────
+builder.Services
+    .AddApplication()
+    .AddInfrastructure(builder.Configuration);
+
+builder.Services.AddEndpointsApiExplorer();
+builder.Services.AddSwaggerGen(options =>
+{
+    options.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
+    {
+        Name = "Authorization",
+        Type = SecuritySchemeType.Http,
+        Scheme = "Bearer",
+        BearerFormat = "JWT",
+        In = ParameterLocation.Header,
+        Description = "Enter your JWT access token."
+    });
+
+    options.AddSecurityRequirement(new OpenApiSecurityRequirement
+    {
+        {
+            new OpenApiSecurityScheme
+            {
+                Reference = new OpenApiReference
+                {
+                    Type = ReferenceType.SecurityScheme,
+                    Id = "Bearer"
+                }
+            },
+            []
+        }
+    });
+});
+
+// ── APPROACH CHOICE ───────────────────────────────────────────────────────────
+// To use Controllers: keep the line below, comment out the Minimal API line
+builder.Services.AddControllers();
+
+// To use Minimal APIs: comment out AddControllers() above — nothing extra needed here
+// ─────────────────────────────────────────────────────────────────────────────
+
+var app = builder.Build();
+
+if (app.Environment.IsDevelopment())
+{
+    app.UseSwagger();
+    app.UseSwaggerUI();
+}
+
+app.UseAuthentication();
+app.UseAuthorization();
+
+// ── APPROACH CHOICE ───────────────────────────────────────────────────────────
+// To use Controllers: keep this line
+app.MapControllers();
+
+// To use Minimal APIs: comment out MapControllers() above, uncomment this line
+// app.MapEndpointGroups();
+// ─────────────────────────────────────────────────────────────────────────────
+
+app.Run();
+```
+
+---
+
+## The actual differences between the two approaches — for interview clarity
+
+| | Controllers | Minimal APIs |
+|---|---|---|
+| **Registration** | `AddControllers()` + `MapControllers()` | Nothing extra + `MapEndpointGroups()` |
+| **Error mapping** | `ApiController.Problem(errors)` — inherited base method | `errors.ToProblem()` — extension method on `List<Error>` |
+| **Route definition** | `[Route]`, `[HttpPost]` attributes on class/method | `.MapPost(...)` fluent calls in `MapEndpoints` |
+| **Authorization** | `[Authorize]`, `[AllowAnonymous]` attributes | `.RequireAuthorization()`, `.AllowAnonymous()` fluent calls |
+| **Swagger docs** | `[ProducesResponseType]` attributes | `.Produces<T>()`, `.ProducesProblem()` fluent calls |
+| **DI injection** | Constructor injection on controller | Parameters directly on endpoint delegate |
+| **Model binding** | `[FromBody]`, `[FromRoute]` attributes | Automatic by convention for minimal APIs |
+| **Best for** | Larger feature sets, familiar to most .NET teams | Lightweight services, microservices, newer codebases |
+
+The single `Program.cs` comment block is all you ever change to flip between them — the Application layer, Infrastructure layer, domain, and MediatR handlers are completely untouched. That's the actual value of the architecture you've built: the delivery mechanism is a replaceable detail.
+
+Ready for the Event module?
