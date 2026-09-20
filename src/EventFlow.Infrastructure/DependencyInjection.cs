@@ -2,20 +2,23 @@ using System.Text;
 using EventFlow.Application.Common.Interfaces;
 using EventFlow.Domain.Users.Enums;
 using EventFlow.Infrastructure.Data;
+using EventFlow.Infrastructure.Helpers;
 using EventFlow.Infrastructure.Services;
 using FluentValidation;
 using MediatR;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Hosting;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
 using Microsoft.IdentityModel.Tokens;
 
 namespace EventFlow.Infrastructure; 
 
 public static class DependencyInjection
 {
-    public static IServiceCollection AddInfrastructure(this IServiceCollection services, IConfiguration configuration)
+    public static IServiceCollection AddInfrastructure(this IServiceCollection services, IConfiguration configuration,IWebHostEnvironment environment)
     {
 
         // services.Configure<JwtSettings>(configuration.GetSection("JwtSettings"));
@@ -75,7 +78,20 @@ public static class DependencyInjection
                     .RequireRole(UserRole.Employee.ToString())
                     .RequireClaim("tenant_id"));
         });
+        
+        services.Configure<EmailSettings>(configuration.GetSection("EmailSettings"));
+        services.AddScoped<EmailService>();
 
+        if (environment.IsDevelopment())
+        {
+            // Logs to console — no real emails sent while building
+            services.AddScoped<IEmailSender, LogEmailSender>();
+        }
+        else
+        {
+            // Real SMTP — only active in staging/production
+            services.AddScoped<IEmailSender, SmtpEmailSender>();
+        }
         return services;
     }
 }
