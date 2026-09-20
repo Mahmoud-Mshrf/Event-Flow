@@ -34,7 +34,7 @@ public sealed class JwtTokenService(IOptions<JwtSettings> settings) : ITokenServ
             issuer: _settings.Issuer,
             audience: _settings.Audience,
             claims: claims,
-            expires: DateTime.UtcNow.AddMinutes(_settings.DurationInMinutes),
+            expires: DateTime.UtcNow.AddMinutes(_settings.AccessTokenMinutes),
             signingCredentials: creds);
 
         return new JwtSecurityTokenHandler().WriteToken(token);
@@ -47,10 +47,11 @@ public sealed class JwtTokenService(IOptions<JwtSettings> settings) : ITokenServ
     }
 }
 
-public class JwtSettings
+public sealed class JwtSettings:ITokenSettings
 {
-    public string Issuer {get;set;}
-    public string Audience {get;set;}
-    public string SigningKey {get;set;}
-    public int DurationInMinutes {get;set;}
+    public string SigningKey { get; init; } = null!;
+    public string Issuer { get; init; } = null!;
+    public string Audience { get; init; } = null!;
+    public int AccessTokenMinutes { get; init; } = 15;
+    public int RefreshTokenDays { get; init; } = 7;
 }

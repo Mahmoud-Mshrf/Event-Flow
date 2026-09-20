@@ -4,13 +4,14 @@ using EventFlow.Domain.Common.Results;
 using EventFlow.Domain.Identity;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Options;
 
 namespace EventFlow.Application.Features.Authentication.Commands.Login;
 
 public sealed class LoginCommandHandler(
     IAppDbContext db,
     IPasswordHasher passwordHasher,
-    ITokenService tokenService) : IRequestHandler<LoginCommand, Result<LoginResponse>>
+    ITokenService tokenService, ITokenSettings tokenSettings) : IRequestHandler<LoginCommand, Result<LoginResponse>>
 {
     public async Task<Result<LoginResponse>> Handle(LoginCommand request, CancellationToken ct)
     {
@@ -45,7 +46,7 @@ public sealed class LoginCommandHandler(
             Guid.NewGuid(),
             user.Id,
             refreshTokenHash,
-            validFor: TimeSpan.FromDays(7));
+            validFor: TimeSpan.FromDays(tokenSettings.RefreshTokenDays));
 
         await db.RefreshTokens.AddAsync(refreshToken, ct);
         await db.SaveChangesAsync(ct);

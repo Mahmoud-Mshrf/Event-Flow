@@ -15,7 +15,7 @@ public static class DependencyInjection
     public static IServiceCollection AddInfrastructure(this IServiceCollection services, IConfiguration configuration)
     {
 
-        services.Configure<JwtSettings>(configuration.GetSection("JwtSettings"));
+        // services.Configure<JwtSettings>(configuration.GetSection("JwtSettings"));
         var connectionString = configuration.GetConnectionString("DefaultConnection");
         services.AddDbContext<AppDbContext>(options =>
             options.UseSqlServer(connectionString));
@@ -40,6 +40,14 @@ public static class DependencyInjection
         });
         services.AddScoped<ITokenService, JwtTokenService>();
         services.AddScoped<IPasswordHasher, PasswordHasher>();
+        
+        services.Configure<JwtSettings>(
+            configuration.GetSection("JwtSettings"));
+
+        services.AddSingleton<ITokenSettings>(sp =>
+            sp.GetRequiredService<
+                Microsoft.Extensions.Options.IOptions<JwtSettings>>()
+                .Value);
         return services;
     }
 }
