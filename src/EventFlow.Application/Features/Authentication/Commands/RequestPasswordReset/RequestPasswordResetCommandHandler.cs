@@ -1,4 +1,5 @@
 using System.Security.Cryptography;
+using EventFlow.Application.Common.Helpers;
 using EventFlow.Application.Common.Interfaces;
 using EventFlow.Domain.Common.Results;
 using EventFlow.Domain.Identity;
@@ -36,7 +37,7 @@ public sealed class RequestPasswordResetCommandHandler(
             return Result.Success; // silent — same response as success
 
         // 4. Generate OTP and hash it
-        var rawCode = GenerateOtp();
+        var rawCode = OtpGenerator.Generate();
         var codeHash = passwordHasher.Hash(rawCode);
 
         var token = VerificationToken.Create(
@@ -53,12 +54,6 @@ public sealed class RequestPasswordResetCommandHandler(
         await db.SaveChangesAsync(ct);
 
         return Result.Success;
-    }
-
-    private static string GenerateOtp()
-    {
-        var randomNumber = RandomNumberGenerator.GetInt32(0, 1_000_000);
-        return randomNumber.ToString("D6");
     }
 }
 
