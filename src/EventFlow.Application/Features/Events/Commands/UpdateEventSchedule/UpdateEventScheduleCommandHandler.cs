@@ -1,0 +1,43 @@
+using EventFlow.Application.Common.Interfaces;
+using EventFlow.Application.Features.Events.Dtos;
+using EventFlow.Application.Features.Events.Mappers;
+using EventFlow.Domain.Common.Results;
+using EventFlow.Domain.Events;
+using MediatR;
+using Microsoft.EntityFrameworkCore;
+
+namespace EventFlow.Application.Features.Events.Commands.UpdateEventSchedule;
+
+public sealed class UpdateEventScheduleCommandHandler(
+    IAppDbContext db,
+    ICurrentTenant currentTenant,
+    IDateTimeProvider dateTimeProvider)
+    : IRequestHandler<UpdateEventScheduleCommand, Result<EventDto>>
+{
+    public async Task<Result<EventDto>> Handle(
+        UpdateEventScheduleCommand request,
+        CancellationToken ct)
+    {
+        if (currentTenant.TenantId is not { } tenantId)
+            return EventErrors.InvalidTenant;
+
+        var @event = await db.Events
+            .FirstOrDefaultAsync(e => e.Id == request.EventId
+                && e.TenantId == tenantId, ct);
+
+        if (@event is null)
+            return EventErrors.NotFound;
+
+        var result = @event.UpdateSchedule(
+            request.StartDate,
+            request.EndDate,
+            dateTimeProvider.UtcNow);
+
+        if (result.IsError)
+            return result.TopError;
+
+        await db.SaveChangesAsync(ct);
+
+        return @event.ToDto();
+    }
+}
