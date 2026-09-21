@@ -2,5 +2,10 @@ namespace EventFlow.Application.Common.Interfaces;
 
 public interface ICurrentTenant
 {
-    string? TenantId {get;}
+    Guid? TenantId { get; }
+}
+
+public interface IDateTimeProvider
+{
+    DateTime UtcNow { get; }
 }

@@ -10,24 +10,21 @@ namespace EventFlow.Application.Features.Events.CreateEvent;
 
 public sealed class CreateEventCommandHandler(
     IAppDbContext context,
-    ICurrentTenant tenant)
+    ICurrentTenant currentTenant,
+    IDateTimeProvider dateTimeProvider)
     : IRequestHandler<CreateEventCommand, Result<EventDto>>
 {
     public async Task<Result<EventDto>> Handle(
         CreateEventCommand request,
         CancellationToken cancellationToken)
     {
-        var tenantExists = await context.Tenants
-            .AnyAsync(t => t.Id == Guid.Parse(tenant.TenantId), cancellationToken);
-
-        if (!tenantExists)
-        {
+        // TenantId is Guid? — null means the caller is not a tenant user
+        if (currentTenant.TenantId is not { } tenantId)
             return EventErrors.InvalidTenant;
-        }
 
-        var @event = Event.Create(
+        var result = Event.Create(
             Guid.NewGuid(),
-            Guid.Parse(tenant.TenantId),
+            tenantId,
             request.EventName,
             request.Description,
             request.Location,
@@ -36,19 +33,14 @@ public sealed class CreateEventCommandHandler(
             request.RegistrationStart,
             request.RegistrationEnd,
             request.Visibility,
-            DateTime.UtcNow);
+            dateTimeProvider.UtcNow);
 
-        if (@event.IsError)
-        {
-            return @event.Errors;
-        }
+        if (result.IsError)
+            return result.Errors!;
 
-        await context.Events.AddAsync(
-            @event.Value,
-            cancellationToken);
-
+        await context.Events.AddAsync(result.Value, cancellationToken);
         await context.SaveChangesAsync(cancellationToken);
 
-        return @event.Value.ToDto();
+        return result.Value.ToDto();
     }
 }

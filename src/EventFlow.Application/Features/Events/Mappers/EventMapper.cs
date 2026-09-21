@@ -5,19 +5,15 @@ namespace EventFlow.Application.Features.Events.Mappers;
 
 public static class EventMapper
 {
-    public static EventDto ToDto(this Event entity)
-    {
-        return new EventDto
-        {
-            Id = entity.Id,
-            Name = entity.EventName,
-            Description = entity.Description,
-            StartDate = entity.StartDate,
-            EndDate = entity.EndDate,
-            Location = entity.Location,
-            RegistrationStart = entity.RegistrationStart,
-            RegistrationEnd = entity.RegistrationEnd,
-            Visibility = entity.Visibility
-        };
-    }
+    public static EventDto ToDto(this Event entity) => new(
+        entity.Id,
+        entity.EventName,
+        entity.Description,
+        entity.Location,
+        entity.StartDate,
+        entity.EndDate,
+        entity.RegistrationStart,
+        entity.RegistrationEnd,
+        entity.Visibility,
+        entity.EventStatus);
 }

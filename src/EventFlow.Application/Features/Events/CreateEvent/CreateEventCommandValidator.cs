@@ -1,3 +1,4 @@
+using EventFlow.Application.Common.Interfaces;
 using EventFlow.Domain.Events;
 using FluentValidation;
 
@@ -6,7 +7,7 @@ namespace EventFlow.Application.Features.Events.CreateEvent;
 public sealed class CreateEventCommandValidator
     : AbstractValidator<CreateEventCommand>
 {
-    public CreateEventCommandValidator()
+    public CreateEventCommandValidator(IDateTimeProvider dateTimeProvider)
     {
         RuleFor(x => x.EventName)
             .NotEmpty()
@@ -25,7 +26,7 @@ public sealed class CreateEventCommandValidator
             .WithMessage(EventErrors.InvalidLocation.Description);
 
         RuleFor(x => x.StartDate)
-            .GreaterThan(DateTime.UtcNow)
+            .GreaterThan(dateTimeProvider.UtcNow)
             .WithMessage(EventErrors.InvalidSchedule.Description);
 
         RuleFor(x => x.EndDate)
