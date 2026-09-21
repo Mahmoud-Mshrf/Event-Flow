@@ -12,4 +12,6 @@ public static class RefreshTokenErrors
 {
     public static readonly Error InvalidRefreshToken = Error.Failure("RefreshToken.Invalid", "The provided refresh token is invalid or expired.");
     public static readonly Error NotFoundOrInactive = Error.Failure("RefreshToken.NotFoundOrInactive", "The provided refresh token was not found or is inactive.");
+    public static readonly Error Unauthenticated = Error.Failure("RefreshToken.Unauthenticated", "The caller is not authenticated.");
+
 }
