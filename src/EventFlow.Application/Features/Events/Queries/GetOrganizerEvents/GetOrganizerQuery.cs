@@ -4,7 +4,7 @@ using EventFlow.Application.Features.Events.Dtos;
 using EventFlow.Domain.Common.Results;
 using EventFlow.Domain.Events.Enums;
 
-namespace EventFlow.Application.Features.Events.Queries.GetOrganizerQuery;
+namespace EventFlow.Application.Features.Events.Queries.GetOrganizerEvents;
 
 public sealed record GetOrganizerEventsQuery : PageRequest, ICachedQuery<Result<PaginatedList<EventDto>>>
 {

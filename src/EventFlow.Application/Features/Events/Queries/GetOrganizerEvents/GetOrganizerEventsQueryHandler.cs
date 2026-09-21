@@ -8,7 +8,7 @@ using EventFlow.Domain.Events;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 
-namespace EventFlow.Application.Features.Events.Queries.GetOrganizerQuery;
+namespace EventFlow.Application.Features.Events.Queries.GetOrganizerEvents;
 
 public sealed class GetOrganizerEventsQueryHandler(
     IAppDbContext db,
