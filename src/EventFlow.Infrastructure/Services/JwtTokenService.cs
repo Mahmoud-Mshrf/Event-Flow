@@ -45,6 +45,36 @@ public sealed class JwtTokenService(IOptions<JwtSettings> settings) : ITokenServ
         var randomBytes = RandomNumberGenerator.GetBytes(64);
         return Convert.ToBase64String(randomBytes);
     }
+
+    public Guid? GetUserIdFromExpiredToken(string accessToken)
+    {
+        var tokenValidationParameters = new TokenValidationParameters
+        {
+            ValidateIssuerSigningKey = true,
+            IssuerSigningKey = new SymmetricSecurityKey(
+                Encoding.UTF8.GetBytes(_settings.SigningKey)),
+            ValidateIssuer = true,
+            ValidIssuer = _settings.Issuer,
+            ValidateAudience = true,
+            ValidAudience = _settings.Audience,
+            ValidateLifetime = false, // skip expiry check — intentional
+            ClockSkew = TimeSpan.Zero,
+        };
+
+        try
+        {
+            var principal = new JwtSecurityTokenHandler()
+                .ValidateToken(accessToken, tokenValidationParameters, out _);
+
+            var sub = principal.FindFirstValue(JwtRegisteredClaimNames.Sub);
+
+            return Guid.TryParse(sub, out var userId) ? userId : null;
+        }
+        catch
+        {
+            return null;
+        }
+    }
 }
 
 public sealed class JwtSettings:ITokenSettings

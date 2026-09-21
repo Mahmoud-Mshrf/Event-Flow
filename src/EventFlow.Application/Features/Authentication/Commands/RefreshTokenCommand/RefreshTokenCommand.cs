@@ -6,12 +6,15 @@ using MediatR;
 namespace EventFlow.Application.Features.Authentication.Commands.RefreshTokenCommand;
 
 public sealed record RefreshTokenCommand(
+    string AccessToken,
     string RefreshToken) : IRequest<Result<LoginResponse>>;
-
 public static class RefreshTokenErrors
 {
-    public static readonly Error InvalidRefreshToken = Error.Failure("RefreshToken.Invalid", "The provided refresh token is invalid or expired.");
-    public static readonly Error NotFoundOrInactive = Error.Failure("RefreshToken.NotFoundOrInactive", "The provided refresh token was not found or is inactive.");
-    public static readonly Error Unauthenticated = Error.Failure("RefreshToken.Unauthenticated", "The caller is not authenticated.");
+    public static readonly Error InvalidAccessToken =
+        Error.Unauthorized("RefreshToken.InvalidAccessToken",
+            "The access token is invalid or tampered.");
 
+    public static readonly Error NotFoundOrInactive =
+        Error.Unauthorized("RefreshToken.NotFoundOrInactive",
+            "The refresh token was not found or has expired.");
 }

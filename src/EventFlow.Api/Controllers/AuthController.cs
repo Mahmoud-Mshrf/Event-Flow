@@ -108,6 +108,7 @@ public sealed class AuthController(ISender sender) : ApiController
     [AllowAnonymous]
     [ProducesResponseType(typeof(LoginResponse), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(typeof(ValidationProblemDetails), StatusCodes.Status422UnprocessableEntity)]
     [EndpointSummary("Rotate a refresh token and receive a new access token.")]
     [EndpointName("RefreshToken")]
     public async Task<ActionResult> RefreshToken(
@@ -120,7 +121,6 @@ public sealed class AuthController(ISender sender) : ApiController
             response => Ok(response),
             Problem);
     }
-
     [HttpPost("logout")]
     [Authorize]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
