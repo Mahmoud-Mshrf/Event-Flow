@@ -1,9 +1,8 @@
 using EventFlow.Domain.Common;
 using EventFlow.Domain.Common.Results;
+using EventFlow.Domain.Events.DomainEvents;
 using EventFlow.Domain.Events.Enums;
-using EventFlow.Domain.Orders;
 using EventFlow.Domain.Tenants;
-using EventFlow.Domain.Tickets;
 using EventFlow.Domain.TicketTypes;
 
 namespace EventFlow.Domain.Events;
@@ -29,14 +28,16 @@ public class Event : AuditableEntity
     // Navigation properties
     public Tenant Tenant { get; private set; } = null!;
 
+    // TicketTypes stay — Event.Publish() legitimately needs _ticketTypes.Count
+    // and TicketType lifecycle is tied to the Event (can't exist without it)
     private readonly List<TicketType> _ticketTypes = [];
     public IReadOnlyCollection<TicketType> TicketTypes => _ticketTypes;
 
-    private readonly List<Ticket> _tickets = [];
-    public IReadOnlyCollection<Ticket> Tickets => _tickets;
+    // Tickets and Orders removed — they are separate aggregate roots
+    // Access them via db.Tickets.Where(t => t.EventId == id)
+    // and db.Orders.Where(o => o.EventId == id) in read-side queries
 
-    private readonly List<Order> _orders = [];
-    public IReadOnlyCollection<Order> Orders => _orders;
+    private Event() { } // EF Core
 
     private Event(
         Guid id,
@@ -55,18 +56,16 @@ public class Event : AuditableEntity
         EventName = eventName;
         Description = description;
         Location = location;
-
         StartDate = startDate;
         EndDate = endDate;
-
         RegistrationStart = registrationStart;
         RegistrationEnd = registrationEnd;
-
         Visibility = visibility;
         EventStatus = EventStatus.Draft;
     }
 
     public static Result<Event> Create(
+        Guid id,                    // fix #2 — caller supplies id, consistent with other entities
         Guid tenantId,
         string eventName,
         string? description,
@@ -90,16 +89,14 @@ public class Event : AuditableEntity
 
         if (description is not null &&
            (description.Length < 6 || description.Length > 500))
-            {
-                return TenantErrors.InvalidDescription;
-            }
+            return EventErrors.InvalidDescription;  // fix #4 — was TenantErrors
+
         location = location.Trim();
 
         if (string.IsNullOrWhiteSpace(location))
             return EventErrors.InvalidLocation;
 
-        if (startDate <= currentTime ||
-            startDate >= endDate)
+        if (startDate <= currentTime || startDate >= endDate)
             return EventErrors.InvalidSchedule;
 
         if (registrationStart >= registrationEnd ||
@@ -114,8 +111,8 @@ public class Event : AuditableEntity
             ? null
             : description.Trim();
 
-        var @event = new Event(
-            Guid.NewGuid(),
+        return new Event(
+            id,
             tenantId,
             eventName,
             description,
@@ -125,8 +122,6 @@ public class Event : AuditableEntity
             registrationStart,
             registrationEnd,
             visibility);
-
-        return @event;
     }
 
     public Result<Updated> UpdateDetails(
@@ -143,13 +138,14 @@ public class Event : AuditableEntity
             eventName.Length > 100)
             return EventErrors.InvalidName;
 
-        EventName = eventName;
-
         if (description is not null &&
            (description.Length < 6 || description.Length > 500))
-           {
-               return TenantErrors.InvalidDescription;
-           }
+            return EventErrors.InvalidDescription;  // fix #4
+
+        EventName = eventName;
+        Description = string.IsNullOrWhiteSpace(description)  // fix #3 — was never set
+            ? null
+            : description.Trim();
 
         return Result.Updated;
     }
@@ -177,8 +173,7 @@ public class Event : AuditableEntity
         if (!CanEdit())
             return EventErrors.CannotEdit;
 
-        if (startDate <= currentTime ||
-            startDate >= endDate)
+        if (startDate <= currentTime || startDate >= endDate)
             return EventErrors.InvalidSchedule;
 
         if (RegistrationStart > startDate ||
@@ -227,19 +222,13 @@ public class Event : AuditableEntity
         if (EventStatus != EventStatus.Draft)
             return EventErrors.CannotPublish;
 
-        if (string.IsNullOrWhiteSpace(EventName) ||
-            EventName.Length < 6 ||
-            EventName.Length > 100)
-            return EventErrors.InvalidName;
-
         if (string.IsNullOrWhiteSpace(Description))
             return EventErrors.DescriptionRequiredForPublishing;
 
         if (string.IsNullOrWhiteSpace(Location))
             return EventErrors.LocationRequiredForPublishing;
 
-        if (StartDate <= currentTime ||
-            StartDate >= EndDate)
+        if (StartDate <= currentTime || StartDate >= EndDate)
             return EventErrors.InvalidSchedule;
 
         if (RegistrationStart >= RegistrationEnd ||
@@ -250,10 +239,9 @@ public class Event : AuditableEntity
         if (_ticketTypes.Count == 0)
             return EventErrors.TicketTypeRequiredForPublishing;
 
-        if (!Enum.IsDefined(Visibility))
-            return EventErrors.InvalidVisibility;
-
         EventStatus = EventStatus.Published;
+
+        AddDomainEvent(new EventPublishedDomainEvent(Id, TenantId, Visibility));
 
         return Result.Success;
     }
@@ -304,12 +292,12 @@ public class Event : AuditableEntity
 
         EventStatus = EventStatus.Cancelled;
 
+        AddDomainEvent(new EventCancelledDomainEvent(Id, TenantId));
+
         return Result.Success;
     }
 
-    private bool CanEdit()
-    {
-        return EventStatus is EventStatus.Draft or EventStatus.Published;
-    }
+    private bool CanEdit() =>
+        EventStatus is EventStatus.Draft or EventStatus.Published;
 }
 

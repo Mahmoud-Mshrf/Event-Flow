@@ -98,5 +98,16 @@ namespace EventFlow.Domain.Events
             Error.Conflict(
                 "Event.EventNotEnded",
                 "The event has not ended yet.");
+
+        public static readonly Error InvalidDescription =
+            Error.Validation(
+                "Event.InvalidDescription",
+                "Event description must be between 6 and 500 characters.");
+
+        // And add this one for the NotFound case — you'll need it in handlers
+        public static readonly Error NotFound =
+            Error.NotFound(
+                "Event.NotFound",
+                "The requested event was not found.");
     }
 }
