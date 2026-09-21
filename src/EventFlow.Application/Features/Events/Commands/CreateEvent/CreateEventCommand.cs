@@ -4,7 +4,7 @@ using EventFlow.Domain.Events.Enums;
 using EventFlow.Domain.Tenants;
 using MediatR;
 
-namespace EventFlow.Application.Features.Events.CreateEvent;
+namespace EventFlow.Application.Features.Events.Commands.CreateEvent;
 
 public sealed record CreateEventCommand(
     string EventName,

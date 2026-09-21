@@ -6,7 +6,7 @@ using EventFlow.Domain.Events;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 
-namespace EventFlow.Application.Features.Events.CreateEvent;
+namespace EventFlow.Application.Features.Events.Commands.CreateEvent;
 
 public sealed class CreateEventCommandHandler(
     IAppDbContext context,

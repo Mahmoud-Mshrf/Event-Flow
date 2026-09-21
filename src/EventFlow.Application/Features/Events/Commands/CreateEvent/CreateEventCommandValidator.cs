@@ -2,7 +2,7 @@ using EventFlow.Application.Common.Interfaces;
 using EventFlow.Domain.Events;
 using FluentValidation;
 
-namespace EventFlow.Application.Features.Events.CreateEvent;
+namespace EventFlow.Application.Features.Events.Commands.CreateEvent;
 
 public sealed class CreateEventCommandValidator
     : AbstractValidator<CreateEventCommand>
