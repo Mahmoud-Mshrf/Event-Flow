@@ -22,13 +22,13 @@ public class AppDbContext(DbContextOptions<AppDbContext> options,ICurrentTenant 
         base.OnModelCreating(modelBuilder);
         modelBuilder.ApplyConfigurationsFromAssembly(typeof(AppDbContext).Assembly);
 
-        modelBuilder.Entity<Event>().HasQueryFilter(x=>x.TenantId.ToString()==tenant.TenantId);
-        modelBuilder.Entity<Order>().HasQueryFilter(x=>x.TenantId.ToString()==tenant.TenantId);
-        modelBuilder.Entity<User>().HasQueryFilter(x=>x.TenantId.ToString()==tenant.TenantId);
-        modelBuilder.Entity<Ticket>().HasQueryFilter(x=>x.TenantId.ToString()==tenant.TenantId);
-        modelBuilder.Entity<TicketType>().HasQueryFilter(x=>x.TenantId.ToString()==tenant.TenantId);
-        modelBuilder.Entity<OrderItem>().HasQueryFilter(x=>x.TenantId.ToString()==tenant.TenantId);
-        modelBuilder.Entity<Payment>().HasQueryFilter(x=>x.TenantId.ToString()==tenant.TenantId);
+        modelBuilder.Entity<Event>().HasQueryFilter(x=>x.TenantId == tenant.TenantId);
+        modelBuilder.Entity<Order>().HasQueryFilter(x=>x.TenantId == tenant.TenantId);
+        modelBuilder.Entity<User>().HasQueryFilter(x=>x.TenantId == tenant.TenantId);
+        modelBuilder.Entity<Ticket>().HasQueryFilter(x=>x.TenantId == tenant.TenantId);
+        modelBuilder.Entity<TicketType>().HasQueryFilter(x=>x.TenantId == tenant.TenantId);
+        modelBuilder.Entity<OrderItem>().HasQueryFilter(x=>x.TenantId == tenant.TenantId);
+        modelBuilder.Entity<Payment>().HasQueryFilter(x=>x.TenantId == tenant.TenantId);
     }
     public DbSet<Ticket> Tickets => Set<Ticket>();
     public DbSet<TicketType> TicketTypes => Set<TicketType>();

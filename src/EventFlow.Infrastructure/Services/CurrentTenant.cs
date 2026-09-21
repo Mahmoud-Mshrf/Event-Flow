@@ -6,5 +6,8 @@ namespace EventFlow.Infrastructure.Services;
 
 public class CurrentTenant(IHttpContextAccessor httpContextAccessor) : ICurrentTenant
 {
-    public string? TenantId => httpContextAccessor.HttpContext?.User?.FindFirstValue("TenantId");
+    Guid? ICurrentTenant.TenantId => httpContextAccessor.HttpContext?.User.FindFirstValue("tenantId") is { } tenantId
+        && Guid.TryParse(tenantId, out var parsedTenantId)
+        ? parsedTenantId
+        : null;
 }

@@ -5,12 +5,13 @@ using EventFlow.Domain.Common.Results;
 using EventFlow.Domain.Events;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Caching.Hybrid;
 
 namespace EventFlow.Application.Features.Events.Commands.UpdateEventDetails;
 
 public sealed class UpdateEventDetailsCommandHandler(
     IAppDbContext db,
-    ICurrentTenant currentTenant)
+    ICurrentTenant currentTenant,HybridCache cache)
     : IRequestHandler<UpdateEventDetailsCommand, Result<EventDto>>
 {
     public async Task<Result<EventDto>> Handle(
@@ -33,6 +34,9 @@ public sealed class UpdateEventDetailsCommandHandler(
             return result.TopError;
 
         await db.SaveChangesAsync(ct);
+    
+        // Invalidate all event queries for this tenant
+        await cache.RemoveByTagAsync($"tenant-{tenantId}-events", ct);
 
         return @event.ToDto();
     }
