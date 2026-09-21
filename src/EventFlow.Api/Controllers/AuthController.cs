@@ -1,6 +1,7 @@
 using EventFlow.Application.Features.Authentication.Commands.ConfirmEmail;
 using EventFlow.Application.Features.Authentication.Commands.Login;
 using EventFlow.Application.Features.Authentication.Commands.Logout;
+using EventFlow.Application.Features.Authentication.Commands.RefreshTokenCommand;
 using EventFlow.Application.Features.Authentication.Commands.RegisterAttendee;
 using EventFlow.Application.Features.Authentication.Commands.RequestPasswordReset;
 using EventFlow.Application.Features.Authentication.Commands.ResendEmailConfirmation;
