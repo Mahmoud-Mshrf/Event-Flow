@@ -9,6 +9,7 @@ using MediatR;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Caching.Hybrid;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -92,6 +93,11 @@ public static class DependencyInjection
             // Real SMTP — only active in staging/production
             services.AddScoped<IEmailSender, SmtpEmailSender>();
         }
+        services.AddHybridCache(options => options.DefaultEntryOptions = new HybridCacheEntryOptions
+        {
+            Expiration = TimeSpan.FromMinutes(10), // L2, L3
+            LocalCacheExpiration = TimeSpan.FromSeconds(30), // L1
+        });
         return services;
     }
 }

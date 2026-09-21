@@ -25,3 +25,5 @@ public interface IAppDbContext
     DbSet<RefreshToken> RefreshTokens {get;}
     Task<int> SaveChangesAsync(CancellationToken cancellationToken);
 }
+
+
