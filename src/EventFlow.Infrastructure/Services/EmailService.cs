@@ -15,7 +15,7 @@ public partial class EmailService
             _settings = settings.Value;
         }
 
-        public async Task SendEmailAsync(EmailMessage message)
+        public async Task SendEmailAsync(EmailMessage message,CancellationToken ct = default)
         {
             var email = new MimeMessage();
             email.To.Add(MailboxAddress.Parse(message.To));
@@ -38,9 +38,9 @@ public partial class EmailService
 
             using var client = new SmtpClient();
 
-            await client.ConnectAsync(_settings.Host, _settings.Port, SecureSocketOptions.StartTls);
-            await client.AuthenticateAsync(_settings.Username, _settings.Password);
-            await client.SendAsync(email);
-            await client.DisconnectAsync(true);
+            await client.ConnectAsync(_settings.Host, _settings.Port, SecureSocketOptions.StartTls, ct);
+            await client.AuthenticateAsync(_settings.Username, _settings.Password, ct);
+            await client.SendAsync(email, ct);
+            await client.DisconnectAsync(true, ct);
         }
     }
