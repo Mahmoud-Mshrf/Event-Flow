@@ -28,10 +28,10 @@ public class OrderConfiguration : IEntityTypeConfiguration<Order>
             .HasPrecision(18, 2)
             .IsRequired();
 
-        builder.HasOne(x => x.Event)
-            .WithMany(x => x.Orders)
-            .HasForeignKey(x => x.EventId)
-            .OnDelete(DeleteBehavior.Restrict);
+        // builder.HasOne(x => x.Event)
+        //     .WithMany(x => x.Orders)
+        //     .HasForeignKey(x => x.EventId)
+        //     .OnDelete(DeleteBehavior.Restrict);
 
         // builder.HasOne(x => x.Attendee)
         //     .WithMany(x => x.Orders)
