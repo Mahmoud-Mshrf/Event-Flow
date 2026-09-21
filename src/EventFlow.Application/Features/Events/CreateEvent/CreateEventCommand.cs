@@ -1,6 +1,7 @@
 using EventFlow.Application.Features.Events.Dtos;
 using EventFlow.Domain.Common.Results;
 using EventFlow.Domain.Events.Enums;
+using EventFlow.Domain.Tenants;
 using MediatR;
 
 namespace EventFlow.Application.Features.Events.CreateEvent;
