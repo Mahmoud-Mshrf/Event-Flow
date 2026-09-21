@@ -1,11 +1,16 @@
 using EventFlow.Application.Features.Events.Dtos;
 using EventFlow.Domain.Common.Results;
+using EventFlow.Domain.Events.Enums;
 using MediatR;
 
 namespace EventFlow.Application.Features.Events.CreateEvent;
 
 public sealed record CreateEventCommand(
-    string Name,
-    string Description,
+    string EventName,
+    string? Description,
+    string Location,
     DateTime StartDate,
-    DateTime EndDate) : IRequest<Result<EventDto>>;
+    DateTime EndDate,
+    DateTime RegistrationStart,
+    DateTime RegistrationEnd,
+    EventVisibility Visibility) : IRequest<Result<EventDto>>;
