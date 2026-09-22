@@ -68,4 +68,8 @@ public static class TicketTypeErrors
         Error.NotFound(
             "TicketType.NotFound",
             "Ticket type not found.");
+    public static readonly Error CannotDeleteWithActiveReservations =
+        Error.Conflict(
+            "TicketType.CannotDeleteWithActiveReservations",
+            "Cannot delete a ticket type that has active reservations.");
 }
