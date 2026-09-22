@@ -10,11 +10,6 @@ public static class TicketTypeErrors
             "TicketType.EventIdRequired",
             "Event ID is required.");
 
-    public static readonly Error TenantIdRequired =
-        Error.Validation(
-            "TicketType.TenantIdRequired",
-            "Tenant ID is required.");
-
     public static readonly Error InvalidName =
         Error.Validation(
             "TicketType.InvalidName",
@@ -65,11 +60,14 @@ public static class TicketTypeErrors
             "TicketType.PriceCannotBeChangedDuringSales",
             "Ticket type price cannot be changed during the sales period.");
     public static readonly Error NotFound =
-        Error.NotFound(
-            "TicketType.NotFound",
-            "Ticket type not found.");
+        Error.NotFound("TicketType.NotFound",
+            "The requested ticket type was not found.");
+
+    public static readonly Error TenantIdRequired =
+        Error.Unauthorized("TicketType.TenantIdRequired",
+            "A valid tenant context is required.");
+
     public static readonly Error CannotDeleteWithActiveReservations =
-        Error.Conflict(
-            "TicketType.CannotDeleteWithActiveReservations",
+        Error.Conflict("TicketType.CannotDeleteWithActiveReservations",
             "Cannot delete a ticket type that has active reservations.");
 }
