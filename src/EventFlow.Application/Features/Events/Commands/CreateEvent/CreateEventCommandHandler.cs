@@ -19,7 +19,7 @@ public sealed class CreateEventCommandHandler(
         CancellationToken cancellationToken)
     {
         // TenantId is Guid? — null means the caller is not a tenant user
-        if (currentTenant.TenantId is not { } tenantId)
+        if (currentTenant.TenantGuid is not { } tenantId)
             return EventErrors.InvalidTenant;
 
         var result = Event.Create(

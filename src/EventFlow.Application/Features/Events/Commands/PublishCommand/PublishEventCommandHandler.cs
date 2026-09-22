@@ -19,7 +19,7 @@ public sealed class PublishEventCommandHandler(
         PublishEventCommand request,
         CancellationToken ct)
     {
-        if (currentTenant.TenantId is not { } tenantId)
+        if (currentTenant.TenantGuid is not { } tenantId)
             return EventErrors.InvalidTenant;
 
         // Must include TicketTypes — Publish() checks _ticketTypes.Count internally

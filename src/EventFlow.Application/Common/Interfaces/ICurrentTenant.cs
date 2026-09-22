@@ -2,7 +2,8 @@ namespace EventFlow.Application.Common.Interfaces;
 
 public interface ICurrentTenant
 {
-    Guid? TenantId { get; }
+    string? TenantId { get; }
+    Guid? TenantGuid { get; } // parsed once in the implementation
 }
 
 public interface IDateTimeProvider

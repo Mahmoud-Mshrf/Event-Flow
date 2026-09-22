@@ -153,7 +153,7 @@ public sealed class EventsController(ISender sender,ICurrentTenant currentTenant
         Guid eventId,
         CancellationToken ct)
     {
-        if (currentTenant.TenantId is not { } tenantId)
+        if (currentTenant.TenantGuid is not { } tenantId)
             return Problem([EventErrors.InvalidTenant]);
 
         var result = await sender.Send(new GetEventByIdQuery(eventId, tenantId), ct);
@@ -170,12 +170,9 @@ public sealed class EventsController(ISender sender,ICurrentTenant currentTenant
         [FromQuery] EventVisibility? visibility,
         CancellationToken ct = default)
     {
-        if (currentTenant.TenantId is not { } tenantId)
-            return Problem([EventErrors.InvalidTenant]);
-
         var result = await sender.Send(new GetOrganizerEventsQuery
         {
-            TenantId = tenantId,
+            TenantId =currentTenant.TenantGuid,
             Status = status,
             Visibility = visibility,
             Page = page.Page,

@@ -18,7 +18,7 @@ public sealed class UpdateEventRegistrationPeriodCommandHandler(
         UpdateEventRegistrationPeriodCommand request,
         CancellationToken ct)
     {
-        if (currentTenant.TenantId is not { } tenantId)
+        if (currentTenant.TenantGuid is not { } tenantId)
             return EventErrors.InvalidTenant;
 
         var @event = await db.Events

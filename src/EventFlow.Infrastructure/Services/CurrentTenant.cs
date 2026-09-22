@@ -4,10 +4,11 @@ using Microsoft.AspNetCore.Http;
 
 namespace EventFlow.Infrastructure.Services;
 
-public class CurrentTenant(IHttpContextAccessor httpContextAccessor) : ICurrentTenant
+public sealed class CurrentTenant(IHttpContextAccessor httpContextAccessor) : ICurrentTenant
 {
-    Guid? ICurrentTenant.TenantId => httpContextAccessor.HttpContext?.User.FindFirstValue("tenantId") is { } tenantId
-        && Guid.TryParse(tenantId, out var parsedTenantId)
-        ? parsedTenantId
-        : null;
+    public string? TenantId =>
+        httpContextAccessor.HttpContext?.User.FindFirstValue("tenant_id");
+
+    public Guid? TenantGuid =>
+        Guid.TryParse(TenantId, out var id) ? id : null;
 }

@@ -8,7 +8,7 @@ namespace EventFlow.Application.Features.Events.Queries.GetOrganizerEvents;
 
 public sealed record GetOrganizerEventsQuery : PageRequest, ICachedQuery<Result<PaginatedList<EventDto>>>
 {
-    public required Guid TenantId { get; init; }
+    public required Guid? TenantId { get; init; }
     public EventStatus? Status { get; init; }
     public EventVisibility? Visibility { get; init; }
 
