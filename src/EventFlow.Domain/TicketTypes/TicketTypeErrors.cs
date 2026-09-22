@@ -64,4 +64,8 @@ public static class TicketTypeErrors
         Error.Validation(
             "TicketType.PriceCannotBeChangedDuringSales",
             "Ticket type price cannot be changed during the sales period.");
+    public static readonly Error NotFound =
+        Error.NotFound(
+            "TicketType.NotFound",
+            "Ticket type not found.");
 }
