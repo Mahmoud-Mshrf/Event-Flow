@@ -6,7 +6,7 @@ namespace EventFlow.Application.Features.Events.Queries.GetEventById;
 
 public sealed record GetEventByIdQuery(
     Guid EventId,
-    Guid TenantId) : ICachedQuery<Result<EventDto>>
+    Guid? TenantId) : ICachedQuery<Result<EventDto>>
 {
     public string CacheKey => $"tenant-events:{TenantId}:{EventId}";
 

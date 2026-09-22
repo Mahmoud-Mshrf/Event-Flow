@@ -153,10 +153,8 @@ public sealed class EventsController(ISender sender,ICurrentTenant currentTenant
         Guid eventId,
         CancellationToken ct)
     {
-        if (currentTenant.TenantGuid is not { } tenantId)
-            return Problem([EventErrors.InvalidTenant]);
 
-        var result = await sender.Send(new GetEventByIdQuery(eventId, tenantId), ct);
+        var result = await sender.Send(new GetEventByIdQuery(eventId, currentTenant.TenantGuid), ct);
         return result.Match(response => Ok(response), Problem);
     }
 
