@@ -39,7 +39,7 @@ public sealed class PublishEventCommandHandler(
 
          // Invalidate all event queries for this tenant
         await cache.RemoveByTagAsync($"tenant-{tenantId}-events", ct);
-        
+        await cache.RemoveByTagAsync("public-events", ct);
         return @event.ToDto();
     }
 }

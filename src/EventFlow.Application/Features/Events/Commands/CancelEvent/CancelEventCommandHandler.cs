@@ -3,12 +3,13 @@ using EventFlow.Domain.Common.Results;
 using EventFlow.Domain.Events;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Caching.Hybrid;
 
 namespace EventFlow.Application.Features.Events.Commands.CancelEvent;
 
 public sealed class CancelEventCommandHandler(
     IAppDbContext db,
-    ICurrentTenant currentTenant)
+    ICurrentTenant currentTenant,HybridCache cache)
     : IRequestHandler<CancelEventCommand, Result<Success>>
 {
     public async Task<Result<Success>> Handle(
@@ -34,7 +35,9 @@ public sealed class CancelEventCommandHandler(
         // → releases TicketType capacity
         // → notifies attendees
         await db.SaveChangesAsync(ct);
-
+        await cache.RemoveByTagAsync($"tenant-{tenantId}-events", ct);
+        await cache.RemoveByTagAsync("public-events", ct);
+        await cache.RemoveByTagAsync($"public-event-{request.EventId}", ct);
         return Result.Success;
     }
 }
