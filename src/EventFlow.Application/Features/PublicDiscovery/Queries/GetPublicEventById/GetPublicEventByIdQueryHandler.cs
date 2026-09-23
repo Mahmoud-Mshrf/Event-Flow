@@ -36,6 +36,6 @@ public sealed class GetPublicEventByIdQueryHandler(
         if (@event is null)
             return EventErrors.NotFound;
 
-        return @event.ToDetailDto(now);
+        return @event.ToPublicDetailDto(now);
     }
 }

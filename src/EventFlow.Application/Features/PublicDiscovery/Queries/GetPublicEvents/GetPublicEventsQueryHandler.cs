@@ -57,7 +57,7 @@ public sealed class GetPublicEventsQueryHandler(
             PageSize = paginatedEvents.PageSize,
             TotalPages = paginatedEvents.TotalPages,
             TotalCount = paginatedEvents.TotalCount,
-            Items = paginatedEvents.Items.Select(e => e.ToDto()).ToList()
+            Items = paginatedEvents.Items.Select(e => e.ToPublicDto()).ToList()
         };
     }
 }

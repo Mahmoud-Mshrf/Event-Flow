@@ -5,7 +5,7 @@ namespace EventFlow.Application.Features.PublicDiscovery.Mappers;
 
 public static class PublicEventMapper
 {
-    public static PublicEventDto ToDto(this Event entity) => new(
+    public static PublicEventDto ToPublicDto(this Event entity) => new(
         entity.Id,
         entity.EventName,
         entity.Description,
@@ -18,7 +18,7 @@ public static class PublicEventMapper
         entity.Visibility,
         entity.EventStatus == Domain.Events.Enums.EventStatus.RegistrationOpen);
 
-    public static PublicEventDetailDto ToDetailDto(this Event entity, DateTime now) => new(
+    public static PublicEventDetailDto ToPublicDetailDto(this Event entity, DateTime now) => new(
         entity.Id,
         entity.EventName,
         entity.Description,
