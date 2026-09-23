@@ -98,6 +98,8 @@ public static class DependencyInjection
             Expiration = TimeSpan.FromMinutes(10), // L2, L3
             LocalCacheExpiration = TimeSpan.FromSeconds(30), // L1
         });
+        services.AddSingleton<IDateTimeProvider, DateTimeProvider>();
         return services;
+        
     }
 }

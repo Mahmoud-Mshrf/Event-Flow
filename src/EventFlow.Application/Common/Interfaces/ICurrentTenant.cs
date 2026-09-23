@@ -5,8 +5,3 @@ public interface ICurrentTenant
     string? TenantId { get; }
     Guid? TenantGuid { get; } // parsed once in the implementation
 }
-
-public interface IDateTimeProvider
-{
-    DateTime UtcNow { get; }
-}
