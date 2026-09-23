@@ -3,12 +3,13 @@ using EventFlow.Domain.Common.Results;
 using EventFlow.Domain.Orders;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Caching.Hybrid;
 
 namespace EventFlow.Application.Features.Orders.Commands.CancelOrder;
 
 public sealed class CancelOrderCommandHandler(
     IAppDbContext db,
-    ICurrentUser currentUser)
+    ICurrentUser currentUser,HybridCache cache)
     : IRequestHandler<CancelOrderCommand, Result<Success>>
 {
     public async Task<Result<Success>> Handle(
@@ -41,7 +42,7 @@ public sealed class CancelOrderCommandHandler(
         // which the existing handler picks up and releases capacity
         // So we only need to SaveChangesAsync here
         await db.SaveChangesAsync(ct);
-
+        await cache.RemoveByTagAsync($"attendee-{order.AttendeeId}-orders", ct);
         return Result.Success;
     }
 }

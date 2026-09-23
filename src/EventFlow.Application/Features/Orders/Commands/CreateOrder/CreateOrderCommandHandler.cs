@@ -8,13 +8,14 @@ using EventFlow.Domain.Events.Enums;
 using EventFlow.Domain.Orders;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Caching.Hybrid;
 
 namespace EventFlow.Application.Features.Orders.Commands.CreateOrder;
 
 public sealed class CreateOrderCommandHandler(
     IAppDbContext db,
     ICurrentUser currentUser,
-    IDateTimeProvider dateTimeProvider)
+    IDateTimeProvider dateTimeProvider,HybridCache cache)
     : IRequestHandler<CreateOrderCommand, Result<OrderDto>>
 {
     public async Task<Result<OrderDto>> Handle(
@@ -111,7 +112,8 @@ public sealed class CreateOrderCommandHandler(
             // Another request won the race — tell the client to retry
             return OrderErrors.ConcurrencyConflict;
         }
-
+        await cache.RemoveByTagAsync($"attendee-{attendeeId}-orders", ct);
+        await cache.RemoveByTagAsync($"event-{request.EventId}-orders", ct);
         // 8. Build response — load ticket type names for the DTO
         var items = order.OrderItems
             .Select(item => (
