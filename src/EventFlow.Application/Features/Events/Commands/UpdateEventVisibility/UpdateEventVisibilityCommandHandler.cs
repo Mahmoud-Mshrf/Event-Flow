@@ -23,8 +23,7 @@ public sealed class UpdateEventVisibilityCommandHandler(
             return EventErrors.InvalidTenant;
 
         var @event = await db.Events
-            .FirstOrDefaultAsync(e => e.Id == request.EventId
-                && e.TenantId == tenantId, ct);
+            .FirstOrDefaultAsync(e => e.Id == request.EventId, ct);
 
         if (@event is null)
             return EventErrors.NotFound;

@@ -27,8 +27,7 @@ public sealed class GetTicketTypesByEventQueryHandler(
 
         var result = await db.TicketTypes
             .AsNoTracking()
-            .Where(tt => tt.EventId == request.EventId
-                && tt.TenantId == tenantId)
+            .Where(tt => tt.EventId == request.EventId)
             .OrderBy(tt => tt.Price)
             .Select(tt => tt.ToDto(now))
             .ToPaginatedListAsync(request.Page, request.PageSize, ct);

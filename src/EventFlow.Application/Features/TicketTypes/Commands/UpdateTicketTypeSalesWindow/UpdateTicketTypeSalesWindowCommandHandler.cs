@@ -24,8 +24,7 @@ public sealed class UpdateTicketTypeSalesWindowCommandHandler(
             return TicketTypeErrors.TenantIdRequired;
 
         var ticketType = await db.TicketTypes
-            .FirstOrDefaultAsync(tt => tt.Id == request.TicketTypeId
-                && tt.TenantId == tenantId, ct);
+            .FirstOrDefaultAsync(tt => tt.Id == request.TicketTypeId, ct);
 
         if (ticketType is null)
             return TicketTypeErrors.NotFound;

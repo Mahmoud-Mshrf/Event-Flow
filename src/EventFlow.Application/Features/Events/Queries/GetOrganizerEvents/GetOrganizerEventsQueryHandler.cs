@@ -24,7 +24,6 @@ public sealed class GetOrganizerEventsQueryHandler(
 
         var result = await db.Events
             .AsNoTracking()
-            .Where(e => e.TenantId == tenantId)
             .Where(e => !request.Status.HasValue || e.EventStatus == request.Status.Value)
             .Where(e => !request.Visibility.HasValue || e.Visibility == request.Visibility.Value)
             .OrderByDescending(e => e.StartDate)

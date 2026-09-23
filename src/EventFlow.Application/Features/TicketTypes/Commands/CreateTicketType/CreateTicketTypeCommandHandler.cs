@@ -26,8 +26,7 @@ public sealed class CreateTicketTypeCommandHandler(
 
         // Confirm the event exists and belongs to this tenant
         var eventExists = await db.Events
-            .AnyAsync(e => e.Id == request.EventId
-                && e.TenantId == tenantId, ct);
+            .AnyAsync(e => e.Id == request.EventId, ct);
 
         if (!eventExists)
             return EventErrors.NotFound;

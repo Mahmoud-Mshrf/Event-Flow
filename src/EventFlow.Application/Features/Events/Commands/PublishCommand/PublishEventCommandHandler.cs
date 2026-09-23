@@ -25,8 +25,7 @@ public sealed class PublishEventCommandHandler(
         // Must include TicketTypes — Publish() checks _ticketTypes.Count internally
         var @event = await db.Events
             .Include(e => e.TicketTypes)
-            .FirstOrDefaultAsync(e => e.Id == request.EventId
-                && e.TenantId == tenantId, ct);
+            .FirstOrDefaultAsync(e => e.Id == request.EventId, ct);
 
         if (@event is null)
             return EventErrors.NotFound;

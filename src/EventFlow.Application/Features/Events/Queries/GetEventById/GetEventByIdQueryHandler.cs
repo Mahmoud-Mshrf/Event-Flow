@@ -22,8 +22,7 @@ public sealed class GetEventByIdQueryHandler(
 
         var @event = await db.Events
             .AsNoTracking()
-            .FirstOrDefaultAsync(e => e.Id == request.EventId
-                && e.TenantId == tenantId, ct);
+            .FirstOrDefaultAsync(e => e.Id == request.EventId, ct);
 
         if (@event is null)
             return EventErrors.NotFound;

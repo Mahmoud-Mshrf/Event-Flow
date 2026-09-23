@@ -23,8 +23,7 @@ public sealed class GetTicketTypeByIdQueryHandler(
 
         var ticketType = await db.TicketTypes
             .AsNoTracking()
-            .FirstOrDefaultAsync(tt => tt.Id == request.TicketTypeId
-                && tt.TenantId == tenantId, ct);
+            .FirstOrDefaultAsync(tt => tt.Id == request.TicketTypeId, ct);
 
         if (ticketType is null)
             return TicketTypeErrors.NotFound;
