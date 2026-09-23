@@ -1,5 +1,6 @@
 using EventFlow.Application.Common.Interfaces;
 using EventFlow.Application.Features.PublicDiscovery.Dtos;
+using EventFlow.Application.Features.PublicDiscovery.Mappers;
 using EventFlow.Domain.Common.Results;
 using EventFlow.Domain.Events;
 using EventFlow.Domain.Events.Enums;
@@ -30,32 +31,11 @@ public sealed class GetPublicEventByIdQueryHandler(
                 (e.EventStatus == EventStatus.Published ||
                  e.EventStatus == EventStatus.RegistrationOpen ||
                  e.EventStatus == EventStatus.RegistrationClosed))
-            .Select(e => new PublicEventDetailDto(
-                e.Id,
-                e.EventName,
-                e.Description,
-                e.Location,
-                e.Tenant.Name,
-                e.StartDate,
-                e.EndDate,
-                e.RegistrationStart,
-                e.RegistrationEnd,
-                e.EventStatus == EventStatus.RegistrationOpen,
-                e.TicketTypes
-                    .Where(tt => tt.SalesStart <= now && tt.SalesEnd >= now)
-                    .OrderBy(tt => tt.Price)
-                    .Select(tt => new PublicTicketTypeDto(
-                        tt.Id,
-                        tt.Name,
-                        tt.Price,
-                        tt.Capacity - tt.ReservedQuantity,
-                        tt.SalesStart <= now && tt.SalesEnd >= now))
-                    .ToList()))
             .FirstOrDefaultAsync(ct);
 
         if (@event is null)
             return EventErrors.NotFound;
 
-        return @event;
+        return @event.ToDetailDto(now);
     }
 }

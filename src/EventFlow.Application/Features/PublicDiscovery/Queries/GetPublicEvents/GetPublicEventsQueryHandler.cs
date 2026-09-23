@@ -2,6 +2,7 @@ using EventFlow.Application.Common.Contracts;
 using EventFlow.Application.Common.Extensions;
 using EventFlow.Application.Common.Interfaces;
 using EventFlow.Application.Features.PublicDiscovery.Dtos;
+using EventFlow.Application.Features.PublicDiscovery.Mappers;
 using EventFlow.Domain.Common.Results;
 using EventFlow.Domain.Events.Enums;
 using MediatR;
@@ -46,22 +47,17 @@ public sealed class GetPublicEventsQueryHandler(
         if (request.ToDate.HasValue)
             query = query.Where(e => e.StartDate <= request.ToDate.Value);
 
-        var result = await query
+        var paginatedEvents = await query
             .OrderBy(e => e.StartDate)
-            .Select(e => new PublicEventDto(
-                e.Id,
-                e.EventName,
-                e.Description,
-                e.Location,
-                e.Tenant.Name,
-                e.StartDate,
-                e.EndDate,
-                e.RegistrationStart,
-                e.RegistrationEnd,
-                e.Visibility,
-                e.EventStatus == EventStatus.RegistrationOpen))
             .ToPaginatedListAsync(request.Page, request.PageSize, ct);
 
-        return result;
+        return new PaginatedList<PublicEventDto>
+        {
+            PageNumber = paginatedEvents.PageNumber,
+            PageSize = paginatedEvents.PageSize,
+            TotalPages = paginatedEvents.TotalPages,
+            TotalCount = paginatedEvents.TotalCount,
+            Items = paginatedEvents.Items.Select(e => e.ToDto()).ToList()
+        };
     }
 }
