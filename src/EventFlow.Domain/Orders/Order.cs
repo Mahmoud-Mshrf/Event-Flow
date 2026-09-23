@@ -47,7 +47,7 @@ public class Order : AuditableEntity
         Guid eventId,
         Guid attendeeId,
         string orderNumber,
-        IReadOnlyCollection<(Guid Id,Guid tenantId, Guid TicketTypeId, int Quantity, decimal UnitPrice)> requestedItems)
+        IReadOnlyCollection<(Guid Id, Guid TicketTypeId, int Quantity, decimal UnitPrice)> requestedItems)
     {
         if (requestedItems is null || requestedItems.Count == 0)
             return OrderErrors.NoItems;
@@ -56,7 +56,7 @@ public class Order : AuditableEntity
             return OrderErrors.InvalidItemQuantity;
 
         var items = requestedItems
-            .Select(i => OrderItem.Create(i.Id,i.tenantId ,i.TicketTypeId, i.Quantity, i.UnitPrice))
+            .Select(i => OrderItem.Create(i.Id,tenantId ,i.TicketTypeId, i.Quantity, i.UnitPrice))
             .ToList();
 
         return new Order(id, tenantId, eventId, attendeeId, orderNumber, items);
