@@ -11,7 +11,7 @@ public sealed class PaymobSettings
     // From Paymob dashboard → Settings → Payment Integrations
     // Each payment method has its own integration ID
     // For MVP: just card payment
-    public int[] CardIntegrationIds { get; init; }=[];
+    public List<int> CardIntegrationIds { get; init; }=[];
 
     // Where Paymob redirects the attendee after payment completes
     public string RedirectionUrl { get; init; } = null!;   // your frontend success/cancel page
