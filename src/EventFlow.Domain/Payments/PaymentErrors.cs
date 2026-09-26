@@ -19,26 +19,28 @@ public static class PaymentErrors
     public static readonly Error CannotTransitionFromNonPending =
         Error.Validation("Payment.CannotTransitionFromNonPending", "Only a pending payment can succeed or fail.");
 
-        public static readonly Error Unauthenticated =
+public static readonly Error Unauthenticated =
         Error.Unauthorized("Payment.Unauthenticated",
-            "You must be logged in to purchase a payment.");
+            "You must be logged in to initiate a payment.");
+
     public static readonly Error OrderNotPayable =
-        Error.Unauthorized("Payment.OrderNotPayable",
-            "You must be logged in to purchase a payment.");    
+        Error.Conflict("Payment.OrderNotPayable",
+            "This order cannot be paid. It may already be paid, expired, or cancelled.");
+
     public static readonly Error PaymentAlreadyInitiated =
-        Error.Unauthorized("Payment.PaymentAlreadyInitiated",
-            "You must be logged in to purchase a payment.");       
-    
+        Error.Conflict("Payment.AlreadyInitiated",
+            "A payment session already exists for this order. Please complete or wait for it to expire.");
+
     public static readonly Error InvalidSignature =
         Error.Unauthorized("Payment.InvalidSignature",
-            "Invalid webhook signature");   
-     
-    public static readonly Error OrderNotFound =
-        Error.Unauthorized("Payment.OrderNotFound",
-            "Order not found");       
-    
+            "The webhook request could not be verified.");
+
     public static readonly Error PaymentNotFound =
-        Error.Unauthorized("Payment.PaymentNotFound",
-            "Payment not found");   
+        Error.NotFound("Payment.NotFound",
+            "No payment record was found for this transaction.");
+
+    public static readonly Error OrderNotFound =
+        Error.NotFound("Payment.OrderNotFound",
+            "The order associated with this payment could not be found."); 
 }
 

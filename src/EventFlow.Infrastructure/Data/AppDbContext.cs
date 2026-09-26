@@ -12,6 +12,7 @@ using EventFlow.Domain.Users;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
+using Org.BouncyCastle.Math.EC.Rfc7748;
 
 namespace EventFlow.Infrastructure.Data;
 
@@ -29,6 +30,10 @@ public class AppDbContext(DbContextOptions<AppDbContext> options,ICurrentTenant 
         modelBuilder.Entity<TicketType>().HasQueryFilter(x=>x.TenantId == tenant.TenantGuid);
         modelBuilder.Entity<OrderItem>().HasQueryFilter(x=>x.TenantId == tenant.TenantGuid);
         modelBuilder.Entity<Payment>().HasQueryFilter(x=>x.TenantId == tenant.TenantGuid);
+        modelBuilder.Entity<RefreshToken>().HasKey(x=>x.Id);
+        modelBuilder.Entity<VerificationToken>().HasKey(x=>x.Id);
+        modelBuilder.Entity<Payment>().HasKey(x=>x.Id);
+        modelBuilder.Entity<Payment>().Property(x=>x.Amount).HasColumnType("decimal");
         
     }
     public DbSet<Ticket> Tickets => Set<Ticket>();

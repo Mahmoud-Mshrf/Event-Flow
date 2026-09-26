@@ -109,7 +109,7 @@ public static class DependencyInjection
 
         // Register named HttpClient for Paymob
         // The Authorization header is set once here — every request uses it
-        services.AddHttpClient("Paymob", (sp, client) =>
+        services.AddHttpClient("Paymob", (IServiceProvider sp,HttpClient client) =>
         {
             var settings = sp.GetRequiredService<IOptions<PaymobSettings>>().Value;
 
