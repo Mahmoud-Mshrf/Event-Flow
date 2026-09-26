@@ -1,8 +1,11 @@
+using System.Net.Http.Headers;
 using System.Text;
 using EventFlow.Application.Common.Interfaces;
 using EventFlow.Domain.Users.Enums;
 using EventFlow.Infrastructure.Data;
 using EventFlow.Infrastructure.Helpers;
+using EventFlow.Infrastructure.PaymentGateways.Paymob;
+using EventFlow.Infrastructure.PaymentGateways.Paymob.Service;
 using EventFlow.Infrastructure.Services;
 using FluentValidation;
 using MediatR;
@@ -13,6 +16,7 @@ using Microsoft.Extensions.Caching.Hybrid;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 
 namespace EventFlow.Infrastructure; 
@@ -99,6 +103,26 @@ public static class DependencyInjection
             LocalCacheExpiration = TimeSpan.FromSeconds(30), // L1
         });
         services.AddSingleton<IDateTimeProvider, DateTimeProvider>();
+
+        // In DependencyInjection.cs
+        services.Configure<PaymobSettings>(configuration.GetSection("Paymob"));
+
+        // Register named HttpClient for Paymob
+        // The Authorization header is set once here — every request uses it
+        services.AddHttpClient("Paymob", (sp, client) =>
+        {
+            var settings = sp.GetRequiredService<IOptions<PaymobSettings>>().Value;
+
+            // Paymob uses "Token " prefix — not "Bearer "
+            client.DefaultRequestHeaders.Authorization =
+                new AuthenticationHeaderValue("Token", settings.SecretKey.Replace("Token ", ""));
+
+            client.DefaultRequestHeaders.Accept
+                .Add(new MediaTypeWithQualityHeaderValue("application/json"));
+        });
+
+        services.AddScoped<IPaymentGateway, PaymobPaymentGateway>();
+
         return services;
         
     }
