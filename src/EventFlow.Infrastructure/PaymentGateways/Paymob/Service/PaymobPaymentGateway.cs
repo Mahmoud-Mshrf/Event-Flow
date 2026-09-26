@@ -101,16 +101,22 @@ public sealed class PaymobPaymentGateway(
     // ══════════════════════════════════════════════════════════
     // WEBHOOK VERIFICATION — using Paymob's documented HMAC method
     // ══════════════════════════════════════════════════════════
-    public PaymentWebhookEvent? ParseAndVerifyWebhook(WebhookRequest webhookRequest)
+
+    public PaymentWebhookEvent? ParseAndVerifyWebhook(WebhookRequest request)
     {
         try
         {
-            // Parse the JSON body
-            var callback = JsonSerializer.Deserialize<PaymobTransactionCallback>(payload);
-            if (callback?.Obj is null) return null;
+            // Paymob-specific: HMAC arrives as ?hmac= query parameter
+            // This knowledge stays here — never leaks to controller or handler
+            if (!request.QueryParameters.TryGetValue("hmac", out var hmacFromQuery)
+                || string.IsNullOrWhiteSpace(hmacFromQuery))
+                return null;
 
+            var callback = JsonSerializer.Deserialize<PaymobTransactionCallback>(
+                request.RawBody);
             // Only handle TRANSACTION type callbacks
-            if (callback.Type != "TRANSACTION") return null;
+            if (callback?.Obj is null || callback.Type != "TRANSACTION")
+                return null;
 
             var obj = callback.Obj;
 
@@ -120,14 +126,13 @@ public sealed class PaymobPaymentGateway(
             // Step 2: Concatenate their string values
             // Step 3: HMAC-SHA512 with your HMAC secret
             // Step 4: Compare with ?hmac= query parameter
-
             var concatenated = string.Concat(
                 obj.AmountCents.ToString(),
                 obj.CreatedAt,
                 obj.Currency,
                 obj.ErrorOccured.ToString().ToLower(),
                 obj.HasParentTransaction.ToString().ToLower(),
-                obj.Id.ToString(),              // obj.id for POST callbacks
+                obj.Id.ToString(),
                 obj.IntegrationId.ToString(),
                 obj.Is3dSecure.ToString().ToLower(),
                 obj.IsAuth.ToString().ToLower(),
@@ -135,7 +140,7 @@ public sealed class PaymobPaymentGateway(
                 obj.IsRefunded.ToString().ToLower(),
                 obj.IsStandalonePayment.ToString().ToLower(),
                 obj.IsVoided.ToString().ToLower(),
-                obj.Order?.Id.ToString(),       // order.id for POST callbacks
+                obj.Order?.Id.ToString(),
                 obj.Owner.ToString(),
                 obj.Pending.ToString().ToLower(),
                 obj.SourceData?.Pan ?? string.Empty,
@@ -146,27 +151,27 @@ public sealed class PaymobPaymentGateway(
             var keyBytes = Encoding.UTF8.GetBytes(_settings.HmacSecret);
             var messageBytes = Encoding.UTF8.GetBytes(concatenated);
             using var hmac = new HMACSHA512(keyBytes);
-            var computedHash = hmac.ComputeHash(messageBytes);
-            var computedHmac = Convert.ToHexString(computedHash).ToLower();
+            var hash = hmac.ComputeHash(messageBytes);
+            var computedHmac = Convert.ToHexString(hash).ToLower();
 
-            // If HMAC doesn't match — reject, return null
             if (!computedHmac.Equals(hmacFromQuery, StringComparison.OrdinalIgnoreCase))
                 return null;
-
             // ── BUILD PaymentWebhookEvent ──────────────────────────
             // merchant_order_id = the special_reference we set = your orderNumber
-            var specialReference = obj.Order?.MerchantOrderId ?? string.Empty;
-
-            bool isSucceeded = obj.Success && !obj.IsVoided && !obj.IsRefunded && !obj.Pending;
-            bool isFailed = obj.ErrorOccured || (!obj.Success && !obj.Pending);
-
+            bool isSucceeded = obj.Success && !obj.IsVoided
+                && !obj.IsRefunded && !obj.Pending;
+            bool isFailed = obj.ErrorOccured
+                || (!obj.Success && !obj.Pending);
+            
             return new PaymentWebhookEvent(
-                ProviderEventId: obj.Id.ToString(),         // transaction ID — unique per transaction
-                ProviderReferenceId: specialReference,      // = your orderNumber
+                ProviderEventId: obj.Id.ToString(),
+                // special_reference comes back as merchant_order_id — our orderNumber
+                ProviderReferenceId: obj.Order?.MerchantOrderId ?? string.Empty,
                 EventType: callback.Type,
                 IsPaymentSucceeded: isSucceeded,
                 IsPaymentFailed: isFailed,
-                FailureReason: obj.ErrorOccured ? "Payment was declined by the bank." : null,
+                FailureReason: obj.ErrorOccured
+                    ? "Payment was declined." : null,
                 Amount: obj.AmountCents / 100m);
         }
         catch
