@@ -3,7 +3,7 @@ using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
 using EventFlow.Application.Common.Interfaces;
-using EventFlow.Application.Features.Payment.Models;
+using EventFlow.Application.Features.Payments.Models;
 using EventFlow.Infrastructure.PaymentGateways.Paymob.Models;
 using Microsoft.Extensions.Options;
 

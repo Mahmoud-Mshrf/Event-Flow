@@ -18,5 +18,15 @@ public static class PaymentErrors
 
     public static readonly Error CannotTransitionFromNonPending =
         Error.Validation("Payment.CannotTransitionFromNonPending", "Only a pending payment can succeed or fail.");
+
+        public static readonly Error Unauthenticated =
+        Error.Unauthorized("Payment.Unauthenticated",
+            "You must be logged in to purchase a payment.");
+    public static readonly Error OrderNotPayable =
+        Error.Unauthorized("Payment.OrderNotPayable",
+            "You must be logged in to purchase a payment.");    
+    public static readonly Error PaymentAlreadyInitiated =
+        Error.Unauthorized("Payment.PaymentAlreadyInitiated",
+            "You must be logged in to purchase a payment.");       
 }
 

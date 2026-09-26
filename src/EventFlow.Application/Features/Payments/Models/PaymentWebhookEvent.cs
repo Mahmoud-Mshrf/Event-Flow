@@ -1,4 +1,4 @@
-namespace EventFlow.Application.Features.Payment.Models;
+namespace EventFlow.Application.Features.Payments.Models;
 
 public sealed record PaymentWebhookEvent(
     string ProviderEventId,      // Stripe: evt_...  used for idempotency check

@@ -1,4 +1,4 @@
-namespace EventFlow.Application.Features.Payment.Models;
+namespace EventFlow.Application.Features.Payments.Models;
 
 // What comes back from CreatePaymentSessionAsync
 public sealed record PaymentSessionResult(

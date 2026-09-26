@@ -1,4 +1,4 @@
-namespace EventFlow.Application.Features.Payment.Models;
+namespace EventFlow.Application.Features.Payments.Models;
 
 public sealed record WebhookRequest(
     string RawBody,

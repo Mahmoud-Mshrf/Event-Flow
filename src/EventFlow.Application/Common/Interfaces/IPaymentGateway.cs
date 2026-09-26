@@ -1,4 +1,4 @@
-using EventFlow.Application.Features.Payment.Models;
+using EventFlow.Application.Features.Payments.Models;
 
 namespace EventFlow.Application.Common.Interfaces;
 

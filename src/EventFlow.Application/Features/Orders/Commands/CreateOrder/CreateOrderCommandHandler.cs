@@ -126,9 +126,9 @@ public sealed class CreateOrderCommandHandler(
 
     private static string GenerateOrderNumber()
     {
-        // EF-{timestamp}-{random} — readable, sortable, unique enough for MVP
+        // Ord-{timestamp}-{random} — readable, sortable, unique enough for MVP
         var timestamp = DateTimeOffset.UtcNow.ToString("yyyyMMddHHmmss");
         var random = RandomNumberGenerator.GetInt32(1000, 9999);
-        return $"EF-{timestamp}-{random}";
+        return $"Ord-{timestamp}-{random}";
     }
 }
