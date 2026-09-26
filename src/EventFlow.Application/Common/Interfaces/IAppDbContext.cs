@@ -23,6 +23,7 @@ public interface IAppDbContext
     DbSet<Payment> Payments {get;}
     DbSet<VerificationToken> VerificationTokens {get;}
     DbSet<RefreshToken> RefreshTokens {get;}
+    DbSet<ProcessedWebhookEvent> ProcessedWebhookEvents{get;}
     Task<int> SaveChangesAsync(CancellationToken cancellationToken);
 }
 

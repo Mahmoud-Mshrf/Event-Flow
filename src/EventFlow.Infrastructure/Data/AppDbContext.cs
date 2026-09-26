@@ -29,6 +29,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> options,ICurrentTenant 
         modelBuilder.Entity<TicketType>().HasQueryFilter(x=>x.TenantId == tenant.TenantGuid);
         modelBuilder.Entity<OrderItem>().HasQueryFilter(x=>x.TenantId == tenant.TenantGuid);
         modelBuilder.Entity<Payment>().HasQueryFilter(x=>x.TenantId == tenant.TenantGuid);
+        
     }
     public DbSet<Ticket> Tickets => Set<Ticket>();
     public DbSet<TicketType> TicketTypes => Set<TicketType>();
@@ -41,6 +42,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> options,ICurrentTenant 
     public DbSet<Payment> Payments => Set<Payment>();
     public DbSet<VerificationToken> VerificationTokens => Set<VerificationToken>();
     public DbSet<RefreshToken> RefreshTokens => Set<RefreshToken>();
+    public DbSet<ProcessedWebhookEvent> ProcessedWebhookEvents => Set<ProcessedWebhookEvent>();
     public override async Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
 {
     // Collect all domain events before saving

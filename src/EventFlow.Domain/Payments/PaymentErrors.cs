@@ -28,5 +28,17 @@ public static class PaymentErrors
     public static readonly Error PaymentAlreadyInitiated =
         Error.Unauthorized("Payment.PaymentAlreadyInitiated",
             "You must be logged in to purchase a payment.");       
+    
+    public static readonly Error InvalidSignature =
+        Error.Unauthorized("Payment.InvalidSignature",
+            "Invalid webhook signature");   
+     
+    public static readonly Error OrderNotFound =
+        Error.Unauthorized("Payment.OrderNotFound",
+            "Order not found");       
+    
+    public static readonly Error PaymentNotFound =
+        Error.Unauthorized("Payment.PaymentNotFound",
+            "Payment not found");   
 }
 
