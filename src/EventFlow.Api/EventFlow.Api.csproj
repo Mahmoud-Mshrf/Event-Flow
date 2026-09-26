@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk.Web">
+﻿<Project Sdk="Microsoft.NET.Sdk.Web">
 
   <ItemGroup>
     <ProjectReference Include="..\EventFlow.Application\EventFlow.Application.csproj" />
@@ -15,6 +15,7 @@
     <TargetFramework>net10.0</TargetFramework>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
+    <UserSecretsId>56a62fea-b6cf-4f52-8d41-6105f684edb2</UserSecretsId>
   </PropertyGroup>
 
 </Project>
