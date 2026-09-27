@@ -180,5 +180,71 @@ public sealed class PaymobPaymentGateway(
             return null;
         }
     }
+    public bool VerifyRedirectParams(
+    IReadOnlyDictionary<string, string> queryParams,
+    string hmac)
+{
+    if (string.IsNullOrWhiteSpace(hmac)) return false;
+
+    try
+    {
+        // Paymob's documented field order for redirect HMAC
+        // Different from webhook HMAC field order
+        queryParams.TryGetValue("amount_cents", out var amountCents);
+        queryParams.TryGetValue("created_at", out var createdAt);
+        queryParams.TryGetValue("currency", out var currency);
+        queryParams.TryGetValue("error_occured", out var errorOccured);
+        queryParams.TryGetValue("has_parent_transaction", out var hasParentTransaction);
+        queryParams.TryGetValue("id", out var id);
+        queryParams.TryGetValue("integration_id", out var integrationId);
+        queryParams.TryGetValue("is_3d_secure", out var is3dSecure);
+        queryParams.TryGetValue("is_auth", out var isAuth);
+        queryParams.TryGetValue("is_capture", out var isCapture);
+        queryParams.TryGetValue("is_refunded", out var isRefunded);
+        queryParams.TryGetValue("is_standalone_payment", out var isStandalonePayment);
+        queryParams.TryGetValue("is_voided", out var isVoided);
+        queryParams.TryGetValue("order", out var order);
+        queryParams.TryGetValue("owner", out var owner);
+        queryParams.TryGetValue("pending", out var pending);
+        queryParams.TryGetValue("source_data.pan", out var pan);
+        queryParams.TryGetValue("source_data.sub_type", out var subType);
+        queryParams.TryGetValue("source_data.type", out var type);
+        queryParams.TryGetValue("success", out var success);
+
+        var concatenated = string.Concat(
+            amountCents,
+            createdAt,
+            currency,
+            errorOccured,
+            hasParentTransaction,
+            id,
+            integrationId,
+            is3dSecure,
+            isAuth,
+            isCapture,
+            isRefunded,
+            isStandalonePayment,
+            isVoided,
+            order,
+            owner,
+            pending,
+            pan ?? string.Empty,
+            subType ?? string.Empty,
+            type ?? string.Empty,
+            success);
+
+        var keyBytes = Encoding.UTF8.GetBytes(_settings.HmacSecret);
+        var messageBytes = Encoding.UTF8.GetBytes(concatenated);
+        using var hmacAlgo = new HMACSHA512(keyBytes);
+        var hash = hmacAlgo.ComputeHash(messageBytes);
+        var computed = Convert.ToHexString(hash).ToLower();
+
+        return computed.Equals(hmac, StringComparison.OrdinalIgnoreCase);
+    }
+    catch
+    {
+        return false;
+    }
+}
 
 }

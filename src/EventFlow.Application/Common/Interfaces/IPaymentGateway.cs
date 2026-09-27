@@ -13,5 +13,11 @@ public interface IPaymentGateway
         CancellationToken ct);
 
     PaymentWebhookEvent? ParseAndVerifyWebhook(WebhookRequest request);
+
+    // Verifies the HMAC on Paymob's redirect query params
+    // Returns true if params are legitimate and untampered
+    bool VerifyRedirectParams(
+        IReadOnlyDictionary<string, string> queryParams,
+        string hmac);
 }
 
