@@ -4,38 +4,59 @@ using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
 namespace EventFlow.Infrastructure.Data.Configurations;
 
-public class UserConfiguration : IEntityTypeConfiguration<User>
+public sealed class UserConfiguration : IEntityTypeConfiguration<User>
 {
     public void Configure(EntityTypeBuilder<User> builder)
     {
-        builder.ToTable("Users");
+        builder.HasKey(u => u.Id);
 
-        builder.HasKey(x => x.Id);
+        builder.Property(u => u.Name)
+            .IsRequired()
+            .HasMaxLength(100);
 
-        builder.Property(x => x.PhoneNumber)
+        builder.Property(u => u.Email)
+            .IsRequired()
+            .HasMaxLength(256);
+
+        builder.Property(u => u.PhoneNumber)
             .IsRequired()
             .HasMaxLength(20);
 
-        builder.Property(x => x.Name)
-            .IsRequired()
-            .HasMaxLength(200);
-
-        builder.Property(x => x.Email)
-            .IsRequired()
-            .HasMaxLength(320);
-
-        builder.Property(x => x.PasswordHash)
+        builder.Property(u => u.PasswordHash)
             .IsRequired();
 
-        builder.Property(x => x.Role)
-            .HasConversion<string>();
+        builder.Property(u => u.Role)
+            .HasConversion<string>()    // store as "Owner", "Employee" not 0, 1
+            .HasMaxLength(20);
 
-        builder.Property(x => x.Disabled)
-            .IsRequired();
+        builder.Property(u => u.Disabled)
+            .IsRequired()
+            .HasDefaultValue(false);
 
-        builder.HasOne(x => x.Tenant)
-            .WithMany(x => x.Users)
-            .HasForeignKey(x => x.TenantId)
-            .OnDelete(DeleteBehavior.Restrict);
+        builder.Property(u => u.EmailConfirmed)
+            .IsRequired()
+            .HasDefaultValue(false);
+
+        // Unique: one account per email address across the whole system
+        builder.HasIndex(u => u.Email)
+            .IsUnique();
+
+        // TenantId nullable — staff have one, attendees don't
+        builder.Property(u => u.TenantId)
+            .IsRequired(false);
+
+        // FK to Tenant (nullable — attendees have no tenant)
+        builder.HasOne(u => u.Tenant)
+            .WithMany(t => t.Users)
+            .HasForeignKey(u => u.TenantId)
+            .OnDelete(DeleteBehavior.Restrict)
+            .IsRequired(false);
+
+        // Index for fast staff lookup by tenant
+        builder.HasIndex(u => u.TenantId)
+            .HasFilter("[TenantId] IS NOT NULL");   // partial index — only index non-null rows
+
+        builder.Property(u => u.CreatedAtUtc).IsRequired();
+        builder.Property(u => u.LastModifiedUtc).IsRequired();
     }
 }

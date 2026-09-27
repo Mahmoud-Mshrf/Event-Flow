@@ -1,3 +1,4 @@
+using EventFlow.Domain.Payments;
 using EventFlow.Domain.Tenants;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;

@@ -4,48 +4,55 @@ using EventFlow.Domain.Events;
 
 namespace EventFlow.Infrastructure.Data.Configurations;
 
-public class EventConfiguration : IEntityTypeConfiguration<Event>
+public sealed class EventConfiguration : IEntityTypeConfiguration<Event>
 {
     public void Configure(EntityTypeBuilder<Event> builder)
     {
-        builder.ToTable("Events");
+        builder.HasKey(e => e.Id);
 
-        builder.HasKey(x => x.Id);
-
-        builder.Property(x => x.EventName)
+        builder.Property(e => e.EventName)
             .IsRequired()
-            .HasMaxLength(200);
+            .HasMaxLength(100);
 
-        builder.Property(x => x.Description)
-            .HasMaxLength(2000);
+        builder.Property(e => e.Description)
+            .HasMaxLength(500)
+            .IsRequired(false);
 
-        builder.Property(x => x.Location)
+        builder.Property(e => e.Location)
             .IsRequired()
-            .HasMaxLength(500);
+            .HasMaxLength(300);
 
-        builder.Property(x => x.EventStatus)
+        builder.Property(e => e.EventStatus)
             .HasConversion<string>()
-            .IsRequired();
+            .HasMaxLength(30);
 
-        builder.Property(x => x.Visibility)
+        builder.Property(e => e.Visibility)
             .HasConversion<string>()
+            .HasMaxLength(20);
+
+        builder.Property(e => e.TenantId)
             .IsRequired();
 
-        builder.Property(x => x.StartDate)
-            .IsRequired();
-
-        builder.Property(x => x.EndDate)
-            .IsRequired();
-
-        builder.Property(x => x.RegistrationStart)
-            .IsRequired();
-
-        builder.Property(x => x.RegistrationEnd)
-            .IsRequired();
-
-        builder.HasOne(x => x.Tenant)
-            .WithMany(x => x.Events)
-            .HasForeignKey(x => x.TenantId)
+        // FK to Tenant
+        builder.HasOne(e => e.Tenant)
+            .WithMany(t => t.Events)
+            .HasForeignKey(e => e.TenantId)
             .OnDelete(DeleteBehavior.Restrict);
+
+        // FK to TicketTypes — owned by Event
+        builder.HasMany(e => e.TicketTypes)
+            .WithOne(tt => tt.Event)
+            .HasForeignKey(tt => tt.EventId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        // Indexes for public discovery queries
+        // Filters by Visibility + Status + StartDate — all three in every public query
+        builder.HasIndex(e => new { e.Visibility, e.EventStatus, e.StartDate });
+
+        // Organizer dashboard — filter by TenantId, order by StartDate
+        builder.HasIndex(e => new { e.TenantId, e.StartDate });
+
+        builder.Property(e => e.CreatedAtUtc).IsRequired();
+        builder.Property(e => e.LastModifiedUtc).IsRequired();
     }
 }

@@ -11,12 +11,6 @@ public sealed class ProcessedWebhookEventConfiguration
     {
         builder.HasKey(e => e.Id);
 
-        // THIS IS THE KEY LINE — without this unique index, idempotency doesn't work
-        // When two threads try to insert the same ProviderEventId at the same time,
-        // SQL Server rejects the second one at the database level — no race condition possible
-        builder.HasIndex(e => e.ProviderEventId)
-            .IsUnique();
-
         builder.Property(e => e.ProviderEventId)
             .IsRequired()
             .HasMaxLength(255);
@@ -24,5 +18,16 @@ public sealed class ProcessedWebhookEventConfiguration
         builder.Property(e => e.EventType)
             .IsRequired()
             .HasMaxLength(100);
+
+        // ── THIS IS THE MOST CRITICAL INDEX IN THE WHOLE PROJECT ──
+        // Without this unique index, idempotency doesn't exist
+        // Two concurrent webhooks could both pass the "already processed?" check
+        // before either writes, resulting in double-processing
+        // The unique constraint makes the database enforce atomicity
+        builder.HasIndex(e => e.ProviderEventId)
+            .IsUnique();
+
+        builder.Property(e => e.CreatedAtUtc).IsRequired();
+        builder.Property(e => e.LastModifiedUtc).IsRequired();
     }
 }

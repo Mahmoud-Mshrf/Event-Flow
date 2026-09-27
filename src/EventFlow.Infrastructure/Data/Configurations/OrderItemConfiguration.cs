@@ -4,29 +4,41 @@ using EventFlow.Domain.Orders.OrderItems;
 
 namespace EventFlow.Infrastructure.Data.Configurations;
 
-public class OrderItemConfiguration : IEntityTypeConfiguration<OrderItem>
+public sealed class OrderItemConfiguration : IEntityTypeConfiguration<OrderItem>
 {
     public void Configure(EntityTypeBuilder<OrderItem> builder)
     {
-        builder.ToTable("OrderItems");
+        builder.HasKey(oi => oi.Id);
 
-        builder.HasKey(x => x.Id);
-
-        builder.Property(x => x.Quantity)
+        builder.Property(oi => oi.Quantity)
             .IsRequired();
 
-        builder.Property(x => x.UnitPrice)
-            .HasPrecision(18, 2)
+        builder.Property(oi => oi.UnitPrice)
+            .IsRequired()
+            .HasPrecision(18, 2);
+
+        // Subtotal is computed ([NotMapped]) — not stored
+        builder.Ignore(oi => oi.Subtotal);
+
+        builder.Property(oi => oi.TenantId)
             .IsRequired();
 
-        builder.HasOne(x => x.Order)
-            .WithMany(x => x.OrderItems)
-            .HasForeignKey(x => x.OrderId)
-            .OnDelete(DeleteBehavior.Cascade);
+        builder.Property(oi => oi.OrderId)
+            .IsRequired();
 
-        builder.HasOne(x => x.TicketType)
-            .WithMany(x => x.OrderItems)
-            .HasForeignKey(x => x.TicketTypeId)
+        builder.Property(oi => oi.TicketTypeId)
+            .IsRequired();
+
+        // FK to TicketType
+        builder.HasOne(oi => oi.TicketType)
+            .WithMany(tt => tt.OrderItems)
+            .HasForeignKey(oi => oi.TicketTypeId)
             .OnDelete(DeleteBehavior.Restrict);
+
+        // Index for capacity release on order expiration/cancellation
+        builder.HasIndex(oi => oi.TicketTypeId);
+
+        builder.Property(oi => oi.CreatedAtUtc).IsRequired();
+        builder.Property(oi => oi.LastModifiedUtc).IsRequired();
     }
 }

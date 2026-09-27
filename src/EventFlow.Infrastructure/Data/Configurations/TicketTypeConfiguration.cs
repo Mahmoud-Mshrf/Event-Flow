@@ -4,41 +4,49 @@ using EventFlow.Domain.TicketTypes;
 
 namespace EventFlow.Infrastructure.Data.Configurations;
 
-public class TicketTypeConfiguration : IEntityTypeConfiguration<TicketType>
+public sealed class TicketTypeConfiguration : IEntityTypeConfiguration<TicketType>
 {
     public void Configure(EntityTypeBuilder<TicketType> builder)
     {
-        builder.ToTable("TicketTypes");
+        builder.HasKey(tt => tt.Id);
 
-        builder.HasKey(x => x.Id);
-
-        builder.Property(x => x.Name)
+        builder.Property(tt => tt.Name)
             .IsRequired()
-            .HasMaxLength(200);
+            .HasMaxLength(30);
 
-        builder.Property(x => x.Price)
-            .HasPrecision(18, 2)
+        // Explicit precision for money — never use float/double for currency
+        builder.Property(tt => tt.Price)
+            .IsRequired()
+            .HasPrecision(18, 2);
+
+        builder.Property(tt => tt.Capacity)
             .IsRequired();
 
-        builder.Property(x => x.Capacity)
+        builder.Property(tt => tt.ReservedQuantity)
+            .IsRequired()
+            .HasDefaultValue(0);
+
+        builder.Property(tt => tt.TenantId)
             .IsRequired();
 
-        builder.Property(x => x.ReservedQuantity)
+        builder.Property(tt => tt.EventId)
             .IsRequired();
 
-        builder.Property(x => x.SalesStart)
-            .IsRequired();
+        // ── RowVersion — this is what makes concurrency-safe capacity work ──
+        // EF Core uses this to detect concurrent modifications
+        // If two threads modify the same TicketType simultaneously,
+        // the second SaveChangesAsync throws DbUpdateConcurrencyException
+        builder.Property(tt => tt.RowVersion)
+            .IsRowVersion()
+            .IsConcurrencyToken();
 
-        builder.Property(x => x.SalesEnd)
-            .IsRequired();
+        // Index for fast ticket type lookup by event
+        builder.HasIndex(tt => tt.EventId);
 
-        // Optimistic concurrency
-        builder.Property(x => x.RowVersion)
-            .IsRowVersion();
+        // Composite index for tenant-scoped event lookups
+        builder.HasIndex(tt => new { tt.TenantId, tt.EventId });
 
-        builder.HasOne(x => x.Event)
-            .WithMany(x => x.TicketTypes)
-            .HasForeignKey(x => x.EventId)
-            .OnDelete(DeleteBehavior.Cascade);
+        builder.Property(tt => tt.CreatedAtUtc).IsRequired();
+        builder.Property(tt => tt.LastModifiedUtc).IsRequired();
     }
 }

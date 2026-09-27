@@ -5,52 +5,68 @@ using EventFlow.Domain.Orders;
 
 namespace EventFlow.Infrastructure.Data.Configurations;
 
-public class OrderConfiguration : IEntityTypeConfiguration<Order>
+public sealed class OrderConfiguration : IEntityTypeConfiguration<Order>
 {
     public void Configure(EntityTypeBuilder<Order> builder)
     {
-        builder.ToTable("Orders");
+        builder.HasKey(o => o.Id);
 
-        builder.HasKey(x => x.Id);
-
-        builder.Property(x => x.OrderNumber)
+        builder.Property(o => o.OrderNumber)
             .IsRequired()
-            .HasMaxLength(100);
+            .HasMaxLength(30);
 
-        builder.HasIndex(x => x.OrderNumber)
-            .IsUnique();
+        builder.Property(o => o.Total)
+            .IsRequired()
+            .HasPrecision(18, 2);
 
-        builder.Property(x => x.OrderStatus)
+        builder.Property(o => o.OrderStatus)
             .HasConversion<string>()
+            .HasMaxLength(20);
+
+        builder.Property(o => o.TenantId)
             .IsRequired();
 
-        builder.Property(x => x.Total)
-            .HasPrecision(18, 2)
+        builder.Property(o => o.EventId)
             .IsRequired();
 
-        // builder.HasOne(x => x.Event)
-        //     .WithMany(x => x.Orders)
-        //     .HasForeignKey(x => x.EventId)
-        //     .OnDelete(DeleteBehavior.Restrict);
+        builder.Property(o => o.AttendeeId)
+            .IsRequired();
 
-        // builder.HasOne(x => x.Attendee)
-        //     .WithMany(x => x.Orders)
-        //     .HasForeignKey(x => x.AttendeeId)
-        //     .OnDelete(DeleteBehavior.Restrict);
+        builder.Property(o => o.PaidAt)
+            .IsRequired(false);
 
-        // builder.HasMany("OrderItems")
-        //     .WithOne("Order")
-        //     .HasForeignKey("OrderId")
-        //     .OnDelete(DeleteBehavior.Cascade);
+        // FK to Event
+        builder.HasOne(o => o.Event)
+            .WithMany()
+            .HasForeignKey(o => o.EventId)
+            .OnDelete(DeleteBehavior.Restrict);
 
-        builder.HasMany(x =>x.OrderItems)
-            .WithOne(x => x.Order)
-            .HasForeignKey(x => x.OrderId)
+        // FK to User (Attendee)
+        builder.HasOne(o => o.Attendee)
+            .WithMany()
+            .HasForeignKey(o => o.AttendeeId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        // FK to OrderItems — owned by Order
+        builder.HasMany(o => o.OrderItems)
+            .WithOne(oi => oi.Order)
+            .HasForeignKey(oi => oi.OrderId)
             .OnDelete(DeleteBehavior.Cascade);
 
-        // builder.HasOne(x => x.Payment)
-        //     .WithOne(x => x.Order)
-        //     .HasForeignKey<Payment>(x => x.OrderId)
-        //     .OnDelete(DeleteBehavior.Cascade);
+        // Unique: order number must be unique across all orders
+        builder.HasIndex(o => o.OrderNumber)
+            .IsUnique();
+
+        // Attendee self-service queries — "show me my orders"
+        builder.HasIndex(o => o.AttendeeId);
+
+        // Organizer order management — "show me orders for this event"
+        builder.HasIndex(o => new { o.TenantId, o.EventId });
+
+        // Background job — find pending orders older than 15 minutes
+        builder.HasIndex(o => new { o.OrderStatus, o.CreatedAtUtc });
+
+        builder.Property(o => o.CreatedAtUtc).IsRequired();
+        builder.Property(o => o.LastModifiedUtc).IsRequired();
     }
 }
