@@ -27,7 +27,7 @@ namespace EventFlow.Domain.Events
         public static readonly Error InvalidRegistrationPeriod =
             Error.Validation(
                 "Event.InvalidRegistrationPeriod",
-                "Registration start and end dates must be valid and within the event period.");
+                "Registration dates must be in the future and end before the event starts.");
 
         public static readonly Error InvalidVisibility =
             Error.Validation(

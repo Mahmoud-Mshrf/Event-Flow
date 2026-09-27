@@ -99,9 +99,10 @@ public class Event : AuditableEntity
         if (startDate <= currentTime || startDate >= endDate)
             return EventErrors.InvalidSchedule;
 
-        if (registrationStart >= registrationEnd ||
-            registrationStart > startDate ||
-            registrationEnd > endDate)
+        if (registrationStart <= currentTime ||
+            registrationEnd <= currentTime ||
+            registrationStart >= registrationEnd ||
+            registrationEnd >= startDate)
             return EventErrors.InvalidRegistrationPeriod;
 
         if (!Enum.IsDefined(visibility))
@@ -176,8 +177,7 @@ public class Event : AuditableEntity
         if (startDate <= currentTime || startDate >= endDate)
             return EventErrors.InvalidSchedule;
 
-        if (RegistrationStart > startDate ||
-            RegistrationEnd > endDate)
+        if (RegistrationEnd >= startDate)
             return EventErrors.InvalidRegistrationPeriod;
 
         StartDate = startDate;
@@ -188,14 +188,16 @@ public class Event : AuditableEntity
 
     public Result<Updated> UpdateRegistrationPeriod(
         DateTime registrationStart,
-        DateTime registrationEnd)
+        DateTime registrationEnd,
+        DateTime currentTime)
     {
         if (!CanEdit())
             return EventErrors.CannotEdit;
 
-        if (registrationStart >= registrationEnd ||
-            registrationStart > StartDate ||
-            registrationEnd > EndDate)
+        if (registrationStart <= currentTime ||
+            registrationEnd <= currentTime ||
+            registrationStart >= registrationEnd ||
+            registrationEnd >= StartDate)
             return EventErrors.InvalidRegistrationPeriod;
 
         RegistrationStart = registrationStart;
@@ -232,8 +234,7 @@ public class Event : AuditableEntity
             return EventErrors.InvalidSchedule;
 
         if (RegistrationStart >= RegistrationEnd ||
-            RegistrationStart > StartDate ||
-            RegistrationEnd > EndDate)
+            RegistrationEnd >= StartDate)
             return EventErrors.InvalidRegistrationPeriod;
 
         if (_ticketTypes.Count == 0)

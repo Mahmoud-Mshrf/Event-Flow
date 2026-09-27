@@ -1,5 +1,9 @@
 @baseUrl = http://localhost:5068
-
+@token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIwNmY5ZDk5OS1iNzVjLTRhMDYtOGQ0NC1jYjQyMzdhY2JiMTgiLCJlbWFpbCI6Im1vbXNocmYxMTFAZ21haWwuY29tIiwidGVuYW50X2lkIjoiOWMzNTBiOTctNjI2MS00NTA5LTlmMTYtYmUyMDViZTNiODVhIiwiaHR0cDovL3NjaGVtYXMubWljcm9zb2Z0LmNvbS93cy8yMDA4LzA2L2lkZW50aXR5L2NsYWltcy9yb2xlIjoiT3duZXIiLCJleHAiOjE3OTA1NDU0NDYsImlzcyI6IkV2ZW50RmxvdyIsImF1ZCI6IkV2ZW50RmxvdyJ9.yC6G9fDW-vAljdlKpTghbA3XbGfi-DnN0p7-b0Cz7ww
+@eventId=9803fc41-2621-43f1-965e-4b4503542ebd
+@ticketTypeId=bd754aad-2d2b-42ec-9faf-f326016636f4
+@AttendeeToken=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI5YTgzYWQyNy1kODQxLTQxYzctYjhlOS0wMjIyMDcwN2VkZjMiLCJlbWFpbCI6Im1haG1vdWRtc2hyZjIzN0BnbWFpbC5jb20iLCJleHAiOjE3OTA1NDUyMDksImlzcyI6IkV2ZW50RmxvdyIsImF1ZCI6IkV2ZW50RmxvdyJ9.AdhAxTIN5DUU9lPmU17U5J0PxDbr_oxOh1xtE9uTNYk
+###
 POST {{baseUrl}}/api/auth/register/attendee
 Content-Type: application/json
 
@@ -17,7 +21,7 @@ Content-Type: application/json
 
 {
     "Email":"mahmoudmshrf237@gmail.com",
-    "Code":"042963"
+    "Code":"487066"
 }
 
 
@@ -52,7 +56,7 @@ Content-Type: application/json
 
 {
     "Email":"momshrf111@gmail.com",
-    "Code":"121307"
+    "Code":"438815"
 }
 
 ###
@@ -66,3 +70,92 @@ Content-Type: application/json
 }
 
 ###
+
+POST {{baseUrl}}/api/events
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "EventName": "Cairo Tech Summit 2027",
+  "Description": "A three-day technology conference bringing developers, engineers, and technology professionals together.",
+  "Location": "Cairo International Convention Centre",
+  "StartDate": "2027-04-15T14:00:00Z",
+  "EndDate": "2027-04-17T20:00:00Z",
+  "RegistrationStart": "2027-01-15T10:00:00Z",
+  "RegistrationEnd": "2027-04-14T23:59:59Z",
+  "Visibility": 0
+}
+
+###
+POST {{baseUrl}}/api/events/0f3383b8-ae5b-4f50-a98b-00aaa52a0c5a/ticket-types
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "Name": "Standard Pass",
+  "Price": 750.00,
+  "Capacity": 500,
+  "SalesStart": "2027-01-15T10:00:00Z",
+  "SalesEnd": "2027-04-14T23:59:59Z"
+}
+
+###
+POST {{baseUrl}}/api/orders
+Authorization: Bearer {{AttendeeToken}}
+Content-Type: application/json
+
+{
+  "EventId": "{{eventId}}",
+  "Items": [
+    {
+      "TicketTypeId": "{{ticketTypeId}}",
+      "Quantity": 2
+    }
+  ]
+}
+
+###
+POST {{baseUrl}}/api/events
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "EventName": "Cairo Tech Summit 2027",
+  "Description": "A three-day technology conference bringing developers, engineers, and technology professionals together.",
+  "Location": "Cairo International Convention Centre",
+  "StartDate": "2027-04-15T14:00:00Z",
+  "EndDate": "2027-04-17T20:00:00Z",
+  "RegistrationStart": "2026-09-28T00:30:00+03:00",
+  "RegistrationEnd": "2027-04-14T23:59:59Z",
+  "Visibility": 0
+}
+
+
+###
+###
+POST {{baseUrl}}/api/events/9803fc41-2621-43f1-965e-4b4503542ebd/ticket-types
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "Name": "Standard Pass",
+  "Price": 750.00,
+  "Capacity": 500,
+  "SalesStart": "2026-09-28T00:30:00+03:00",
+  "SalesEnd": "2027-04-14T23:59:59Z"
+}
+
+###
+POST {{baseUrl}}/api/orders
+Authorization: Bearer {{AttendeeToken}}
+Content-Type: application/json
+
+{
+  "EventId": "{{eventId}}",
+  "Items": [
+    {
+      "TicketTypeId": "{{ticketTypeId}}",
+      "Quantity": 2
+    }
+  ]
+}

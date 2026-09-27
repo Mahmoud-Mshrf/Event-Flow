@@ -14,7 +14,7 @@ public sealed class ConfirmEmailCommandHandler(
     public async Task<Result<Success>> Handle(ConfirmEmailCommand request, CancellationToken ct)
     {
         // 1. Find the user by email
-        var user = await db.Users.IgnoreQueryFilters()
+        var user = await db.Users
             .FirstOrDefaultAsync(u => u.Email == request.Email, ct);
 
         if (user is null)

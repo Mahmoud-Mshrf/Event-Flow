@@ -16,7 +16,7 @@ public sealed class LoginCommandHandler(
     public async Task<Result<LoginResponse>> Handle(LoginCommand request, CancellationToken ct)
     {
         // 1. Look up user by email
-        var user = await db.Users.IgnoreQueryFilters()
+        var user = await db.Users
             .FirstOrDefaultAsync(u => u.Email == request.Email, ct);
 
         // 2. Verify password — even if user is null, still run a dummy verify

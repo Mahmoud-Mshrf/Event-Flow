@@ -38,11 +38,15 @@ public sealed class CreateEventCommandValidator
             .WithMessage(EventErrors.InvalidRegistrationPeriod.Description);
 
         RuleFor(x => x.RegistrationStart)
-            .GreaterThanOrEqualTo(x => x.StartDate)
+            .GreaterThan(dateTimeProvider.UtcNow)
             .WithMessage(EventErrors.InvalidRegistrationPeriod.Description);
 
         RuleFor(x => x.RegistrationEnd)
-            .LessThanOrEqualTo(x => x.StartDate)
+            .GreaterThan(dateTimeProvider.UtcNow)
+            .WithMessage(EventErrors.InvalidRegistrationPeriod.Description);
+
+        RuleFor(x => x.RegistrationEnd)
+            .LessThan(x => x.StartDate)
             .WithMessage(EventErrors.InvalidRegistrationPeriod.Description);
 
         RuleFor(x => x.Visibility)

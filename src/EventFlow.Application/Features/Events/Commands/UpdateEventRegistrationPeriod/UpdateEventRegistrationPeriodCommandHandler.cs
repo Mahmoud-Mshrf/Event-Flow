@@ -11,7 +11,9 @@ namespace EventFlow.Application.Features.Events.Commands.UpdateEventRegistration
 
 public sealed class UpdateEventRegistrationPeriodCommandHandler(
     IAppDbContext db,
-    ICurrentTenant currentTenant,HybridCache cache)
+    ICurrentTenant currentTenant,
+    IDateTimeProvider dateTimeProvider,
+    HybridCache cache)
     : IRequestHandler<UpdateEventRegistrationPeriodCommand, Result<EventDto>>
 {
     public async Task<Result<EventDto>> Handle(
@@ -29,7 +31,8 @@ public sealed class UpdateEventRegistrationPeriodCommandHandler(
 
         var result = @event.UpdateRegistrationPeriod(
             request.RegistrationStart,
-            request.RegistrationEnd);
+            request.RegistrationEnd,
+            dateTimeProvider.UtcNow);
 
         if (result.IsError)
             return result.TopError;
