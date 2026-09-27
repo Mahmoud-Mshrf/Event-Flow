@@ -26,12 +26,21 @@ public static class DependencyInjection
     public static IServiceCollection AddInfrastructure(this IServiceCollection services, IConfiguration configuration,IWebHostEnvironment environment)
     {
 
-        // services.Configure<JwtSettings>(configuration.GetSection("JwtSettings"));
-        var connectionString = configuration.GetConnectionString("DefaultConnection");
+        // ── Database ──────────────────────────────────────────────
         services.AddDbContext<AppDbContext>(options =>
-            options.UseSqlServer(connectionString));
+            options.UseSqlServer(
+                configuration.GetConnectionString("Default"),
+                sqlOptions =>
+                {
+                    // Retry on transient SQL failures (connection drops etc.)
+                    sqlOptions.EnableRetryOnFailure(
+                        maxRetryCount: 3,
+                        maxRetryDelay: TimeSpan.FromSeconds(5),
+                        errorNumbersToAdd: null);
+                }));
 
-        services.AddScoped<IAppDbContext>(provider => provider.GetRequiredService<AppDbContext>());
+        services.AddScoped<IAppDbContext>(sp =>
+            sp.GetRequiredService<AppDbContext>());
 
         services.AddAuthentication(options =>
         {

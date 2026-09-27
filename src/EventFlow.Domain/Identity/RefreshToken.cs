@@ -1,6 +1,7 @@
 using EventFlow.Domain.Common;
 using EventFlow.Domain.Common.Errors;
 using EventFlow.Domain.Common.Results;
+using EventFlow.Domain.Users;
 
 namespace EventFlow.Domain.Identity;
 public class RefreshToken : AuditableEntity
@@ -10,7 +11,8 @@ public class RefreshToken : AuditableEntity
     public DateTime ExpiresAtUtc { get; private set; }
     public DateTime? RevokedAtUtc { get; private set; }
     public Guid? ReplacedByTokenId { get; private set; }
-
+    // On RefreshToken entity — add if missing:
+    public User User { get; private set; } = null!;
     public bool IsActive => RevokedAtUtc is null && DateTime.UtcNow < ExpiresAtUtc;
 
     private RefreshToken() { } // EF Core

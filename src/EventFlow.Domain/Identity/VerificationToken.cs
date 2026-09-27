@@ -45,7 +45,7 @@ namespace EventFlow.Domain.Identity;
 public class VerificationToken : AuditableEntity
 {
     public Guid UserId { get; private set; }
-    public User User {get; private set;}
+    public User User { get; private set; } = null!;
     public VerificationTokenType Type { get; private set; }
     public string CodeHash { get; private set; } = null!;
     public DateTime ExpiresAtUtc { get; private set; }
