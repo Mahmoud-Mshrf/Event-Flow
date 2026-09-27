@@ -12,7 +12,7 @@ public sealed class AppDbContextFactory
         var optionsBuilder = new DbContextOptionsBuilder<AppDbContext>();
 
         optionsBuilder.UseSqlServer(
-            "Server=localhost;Database=EventFlow;Trusted_Connection=True;TrustServerCertificate=True");
+            "Data Source=(localdb)\\MSSQLLocalDB;Initial Catalog=EventFlow;Integrated Security=True;");
 
         // Null tenant for design-time — filters use null so migrations
         // see all rows (no filter applied at migration generation time)

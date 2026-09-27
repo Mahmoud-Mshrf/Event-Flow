@@ -1,0 +1,32 @@
+@baseUrl = http://localhost:5068
+
+POST {{baseUrl}}/api/auth/register/attendee
+Content-Type: application/json
+
+{
+    "Name":"Mahmoud Meshref",
+    "Email":"mahmoudmshrf237@gmail.com",
+    "PhoneNumber":"01143128894",
+    "Password":"Mahmoud123@Meshref"
+}
+
+###
+
+POST {{baseUrl}}/api/auth/confirm-email
+Content-Type: application/json
+
+{
+    "Email":"mahmoudmshrf237@gmail.com",
+    "Code":"042963"
+}
+
+
+###
+
+POST {{baseUrl}}/api/auth/login
+Content-Type: application/json
+
+{
+    "Email":"mahmoudmshrf237@gmail.com",
+    "Password":"Mahmoud123@Meshref"
+}
