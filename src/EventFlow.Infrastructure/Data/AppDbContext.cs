@@ -16,61 +16,103 @@ using Org.BouncyCastle.Math.EC.Rfc7748;
 
 namespace EventFlow.Infrastructure.Data;
 
-public class AppDbContext(DbContextOptions<AppDbContext> options,ICurrentTenant tenant,IPublisher _publisher) : DbContext(options), IAppDbContext
+public sealed class AppDbContext(
+    DbContextOptions<AppDbContext> options,
+    ICurrentTenant currentTenant,
+    IPublisher publisher) : DbContext(options), IAppDbContext
 {
+    public DbSet<User> Users => Set<User>();
+    public DbSet<Tenant> Tenants => Set<Tenant>();
+    public DbSet<Event> Events => Set<Event>();
+    public DbSet<TicketType> TicketTypes => Set<TicketType>();
+    public DbSet<Order> Orders => Set<Order>();
+    public DbSet<OrderItem> OrderItems => Set<OrderItem>();
+    public DbSet<Ticket> Tickets => Set<Ticket>();
+    public DbSet<Payment> Payments => Set<Payment>();
+    public DbSet<RefreshToken> RefreshTokens => Set<RefreshToken>();
+    public DbSet<VerificationToken> VerificationTokens => Set<VerificationToken>();
+    public DbSet<ProcessedWebhookEvent> ProcessedWebhookEvents => Set<ProcessedWebhookEvent>();
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
+
+        // Picks up all IEntityTypeConfiguration<T> classes in this assembly
         modelBuilder.ApplyConfigurationsFromAssembly(typeof(AppDbContext).Assembly);
 
-        modelBuilder.Entity<Event>().HasQueryFilter(x=>x.TenantId == tenant.TenantGuid);
-        modelBuilder.Entity<Order>().HasQueryFilter(x=>x.TenantId == tenant.TenantGuid);
-        modelBuilder.Entity<User>().HasQueryFilter(x=>x.TenantId == tenant.TenantGuid);
-        modelBuilder.Entity<Ticket>().HasQueryFilter(x=>x.TenantId == tenant.TenantGuid);
-        modelBuilder.Entity<TicketType>().HasQueryFilter(x=>x.TenantId == tenant.TenantGuid);
-        modelBuilder.Entity<OrderItem>().HasQueryFilter(x=>x.TenantId == tenant.TenantGuid);
-        modelBuilder.Entity<Payment>().HasQueryFilter(x=>x.TenantId == tenant.TenantGuid);
-        modelBuilder.Entity<RefreshToken>().HasKey(x=>x.Id);
-        modelBuilder.Entity<VerificationToken>().HasKey(x=>x.Id);
-        modelBuilder.Entity<Payment>().HasKey(x=>x.Id);
-        modelBuilder.Entity<Payment>().Property(x=>x.Amount).HasColumnType("decimal");
-        
+        // ── Global Query Filters ──────────────────────────────
+        // Automatically appends WHERE TenantId = @currentTenantId
+        // to every query against these entities
+        // Use .IgnoreQueryFilters() to bypass for cross-tenant reads
+        //
+        // Nullable TenantId on User: attendees have null TenantId
+        // The filter returns users where TenantId matches OR where
+        // TenantId is null (attendees) — handled by making the filter
+        // null-aware so attendees can query their own orders
+        //
+        // For strict tenant staff isolation we use non-null filter:
+        modelBuilder.Entity<Event>()
+            .HasQueryFilter(e => e.TenantId == currentTenant.TenantGuid);
+
+        modelBuilder.Entity<TicketType>()
+            .HasQueryFilter(tt => tt.TenantId == currentTenant.TenantGuid);
+
+        modelBuilder.Entity<Order>()
+            .HasQueryFilter(o => o.TenantId == currentTenant.TenantGuid);
+
+        modelBuilder.Entity<OrderItem>()
+            .HasQueryFilter(oi => oi.TenantId == currentTenant.TenantGuid);
+
+        modelBuilder.Entity<Payment>()
+            .HasQueryFilter(p => p.TenantId == currentTenant.TenantGuid);
+
+        modelBuilder.Entity<Ticket>()
+            .HasQueryFilter(t => t.TenantId == currentTenant.TenantGuid);
+
+        // User: staff only (non-null TenantId matching current tenant)
+        // Attendees (null TenantId) are accessed via IgnoreQueryFilters
+        modelBuilder.Entity<User>()
+            .HasQueryFilter(u => u.TenantId == currentTenant.TenantGuid);
     }
-    public DbSet<Ticket> Tickets => Set<Ticket>();
-    public DbSet<TicketType> TicketTypes => Set<TicketType>();
-    public DbSet<Event> Events => Set<Event>();
-    public DbSet<Tenant> Tenants => Set<Tenant>();
-    public DbSet<User> Users => Set<User>();
-    public DbSet<Order> Orders => Set<Order>();
-    public DbSet<OrderItem> OrderItems => Set<OrderItem>();
-    public DbSet<Payment> Payment => Set<Payment>();
-    public DbSet<Payment> Payments => Set<Payment>();
-    public DbSet<VerificationToken> VerificationTokens => Set<VerificationToken>();
-    public DbSet<RefreshToken> RefreshTokens => Set<RefreshToken>();
-    public DbSet<ProcessedWebhookEvent> ProcessedWebhookEvents => Set<ProcessedWebhookEvent>();
-    public override async Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
-{
-    // Collect all domain events before saving
-    // (entities are cleared after dispatch so events don't fire twice)
-    var domainEvents = ChangeTracker
-        .Entries<Entity>()
-        .Select(e => e.Entity)
-        .Where(e => e.DomainEvents.Count != 0)
-        .SelectMany(e =>
+
+    public override async Task<int> SaveChangesAsync(
+        CancellationToken cancellationToken = default)
+    {
+        // Set audit fields on all tracked AuditableEntity instances
+        var now = DateTimeOffset.UtcNow;
+        foreach (var entry in ChangeTracker.Entries<AuditableEntity>())
         {
-            var events = e.DomainEvents.ToList();
-            e.ClearDomainEvents();
-            return events;
-        })
-        .ToList();
+            if (entry.State == EntityState.Added)
+                entry.Property(nameof(AuditableEntity.CreatedAtUtc)).CurrentValue = now;
 
-    // Commit first — events fire only if the transaction succeeded
-    var result = await base.SaveChangesAsync(cancellationToken);
+            if (entry.State is EntityState.Added or EntityState.Modified)
+                entry.Property(nameof(AuditableEntity.LastModifiedUtc)).CurrentValue = now;
+        }
 
-    // Publish after commit — handlers run after HTTP response is already on its way
-    foreach (var domainEvent in domainEvents)
-        await _publisher.Publish(domainEvent, cancellationToken);
+        // Collect domain events BEFORE saving
+        // Entities clear their own events after we snapshot them
+        // so they don't fire twice on a second SaveChangesAsync call
+        var domainEvents = ChangeTracker
+            .Entries<Entity>()
+            .Select(e => e.Entity)
+            .Where(e => e.DomainEvents.Count != 0)
+            .SelectMany(e =>
+            {
+                var events = e.DomainEvents.ToList();
+                e.ClearDomainEvents();
+                return events;
+            })
+            .ToList();
 
-    return result;
-}
+        // Commit to database first
+        // Domain events only fire if the transaction succeeded
+        var result = await base.SaveChangesAsync(cancellationToken);
+
+        // Dispatch domain events after successful commit
+        // MediatR calls each INotificationHandler<TEvent>
+        foreach (var domainEvent in domainEvents)
+            await publisher.Publish(domainEvent, cancellationToken);
+
+        return result;
+    }
 }
