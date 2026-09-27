@@ -39,7 +39,12 @@ public sealed class AppDbContext(
 
         // Picks up all IEntityTypeConfiguration<T> classes in this assembly
         modelBuilder.ApplyConfigurationsFromAssembly(typeof(AppDbContext).Assembly);
-
+        // ── Global Query Filters ──────────────────────────────────────
+        // User intentionally has NO global query filter
+        // Auth endpoints have no tenant context (unauthenticated)
+        // Attendees have null TenantId (filter would exclude them)
+        // Each handler scopes User queries explicitly instead
+        
         // ── Global Query Filters ──────────────────────────────
         // Automatically appends WHERE TenantId = @currentTenantId
         // to every query against these entities
@@ -71,8 +76,7 @@ public sealed class AppDbContext(
 
         // User: staff only (non-null TenantId matching current tenant)
         // Attendees (null TenantId) are accessed via IgnoreQueryFilters
-        modelBuilder.Entity<User>()
-            .HasQueryFilter(u => u.TenantId == currentTenant.TenantGuid);
+        // User — NO filter here. See comment above.
     }
 
     public override async Task<int> SaveChangesAsync(

@@ -1,6 +1,7 @@
 using EventFlow.Application.Features.Payments.Commands.HandleWebhook;
 using EventFlow.Application.Features.Payments.Commands.InitiatePayment;
 using EventFlow.Application.Features.Payments.Models;
+using EventFlow.Application.Features.Payments.Queries.GetPaymentResult;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -81,5 +82,34 @@ public sealed class PaymentsController(ISender sender) : ApiController
         // Only case for non-200: genuine infrastructure failure (DB down)
         // where you want the gateway to retry. For MVP, 200 always is correct.
         return Ok();
+    }
+
+    // In PaymentsController
+    [HttpGet("result")]
+    [AllowAnonymous]
+    [ProducesResponseType(typeof(PaymentResultDto), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
+    [EndpointSummary("Get payment result after redirect from payment gateway.")]
+    [EndpointName("GetPaymentResult")]
+    public async Task<ActionResult> Result(
+        [FromQuery] string merchant_order_id,  // = your orderNumber, from Paymob redirect
+        [FromQuery] string? success,
+        [FromQuery] string? hmac,
+        CancellationToken ct)
+    {
+        // Collect all query params — HMAC verification needs all of them
+        var allParams = Request.Query
+            .ToDictionary(
+                q => q.Key,
+                q => q.Value.ToString(),
+                StringComparer.OrdinalIgnoreCase);
+
+        var result = await sender.Send(new GetPaymentResultQuery(
+            merchant_order_id,
+            success,
+            hmac,
+            allParams), ct);
+
+        return result.Match(response => Ok(response), Problem);
     }
 }
