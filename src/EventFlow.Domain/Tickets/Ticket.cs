@@ -78,7 +78,7 @@ public class Ticket:AuditableEntity
             return TicketErrors.InvalidTicketNumber;
 
         if (string.IsNullOrWhiteSpace(qrCode))
-            return TicketErrors.InvalidQrCode;
+            return TicketErrors.QrCodeRequired;
 
         var ticket = new Ticket(
             id,

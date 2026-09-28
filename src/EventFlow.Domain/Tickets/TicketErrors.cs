@@ -34,9 +34,9 @@ public static class TicketErrors
             "Ticket.InvalidTicketNumber",
             "Ticket number is required.");
 
-    public static readonly Error InvalidQrCode =
+    public static readonly Error QrCodeRequired =
         Error.Validation(
-            "Ticket.InvalidQrCode",
+            "Ticket.QrCodeRequired",
             "QR code is required.");
 
     public static readonly Error CannotCheckIn =
@@ -58,5 +58,21 @@ public static class TicketErrors
         Error.Conflict(
             "Ticket.CannotCancel",
             "Ticket cannot be cancelled.");
+
+    public static readonly Error Unauthenticated =
+        Error.Unauthorized("Ticket.Unauthenticated",
+            "You must be logged in to view tickets.");
+
+    public static readonly Error NotFound =
+        Error.NotFound("Ticket.NotFound",
+            "The requested ticket was not found.");
+    
+    public static readonly Error InvalidQrCode =
+        Error.Validation("Ticket.InvalidQrCode",
+            "The QR code is invalid or has been tampered with.");
+
+    public static readonly Error WrongEvent =
+        Error.Conflict("Ticket.WrongEvent",
+            "This ticket does not belong to this event.");
 }
 
