@@ -6,6 +6,7 @@ using EventFlow.Domain.Tickets;
 using EventFlow.Domain.Users;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Caching.Hybrid;
 
 namespace EventFlow.Application.Features.Payments.EventsHandlers;
 
@@ -13,7 +14,7 @@ namespace EventFlow.Application.Features.Payments.EventsHandlers;
 public sealed class PaymentSucceededDomainEventHandler(
     IAppDbContext db,
     IQrCodeService qrCodeService,
-    IEmailSender emailSender)
+    IEmailSender emailSender,HybridCache cache)
     : INotificationHandler<PaymentSucceededDomainEvent>
 {
     public async Task Handle(
@@ -92,6 +93,10 @@ public sealed class PaymentSucceededDomainEventHandler(
         // 5. Persist all tickets in one batch
         await db.Tickets.AddRangeAsync(issuedTickets, ct);
         await db.SaveChangesAsync(ct);
+
+        // Inject HybridCache and invalidate after tickets are created
+        await cache.RemoveByTagAsync($"attendee-{order.AttendeeId}-tickets", ct);
+        await cache.RemoveByTagAsync($"event-{order.EventId}-tickets", ct);
 
         // 6. Send confirmation email — after tickets are persisted
         //    If email fails, tickets still exist and attendee can view them in the app
