@@ -1,3 +1,4 @@
+using EventFlow.Application.Common.Helpers;
 using EventFlow.Application.Common.Interfaces;
 using EventFlow.Infrastructure.Helpers;
 
@@ -85,5 +86,48 @@ public sealed class SmtpEmailSender(EmailService emailService) : IEmailSender
         };
 
         await emailService.SendEmailAsync(message);
+    }
+    public async Task SendTicketConfirmationAsync(
+        string toEmail,
+        string attendeeName,
+        string eventName,
+        string orderNumber,
+        IReadOnlyCollection<IssuedTicketInfo> tickets,
+        CancellationToken ct)
+    {
+        var ticketRows = string.Join("", tickets.Select(t => $"""
+            <tr>
+                <td style="padding:8px;border:1px solid #ddd;">{t.TicketNumber}</td>
+                <td style="padding:8px;border:1px solid #ddd;">{t.TicketTypeName}</td>
+            </tr>
+            """));
+
+        var message = new EmailMessage
+        {
+            To = toEmail,
+            Subject = $"Your tickets for {eventName}",
+            IsHtml = true,
+            Body = $"""
+                <h2>Your tickets are confirmed!</h2>
+                <p>Hi {attendeeName},</p>
+                <p>Thank you for your purchase. Your tickets for <strong>{eventName}</strong> are ready.</p>
+                <p><strong>Order Number:</strong> {orderNumber}</p>
+
+                <table style="border-collapse:collapse;width:100%;margin:16px 0;">
+                    <thead>
+                        <tr style="background:#1a1a2e;color:white;">
+                            <th style="padding:8px;text-align:left;">Ticket Number</th>
+                            <th style="padding:8px;text-align:left;">Type</th>
+                        </tr>
+                    </thead>
+                    <tbody>{ticketRows}</tbody>
+                </table>
+
+                <p>Present your ticket QR code at the event entrance.
+                You can view your tickets anytime in the EventFlow app.</p>
+                """
+        };
+
+        await emailService.SendEmailAsync(message, ct);
     }
 }

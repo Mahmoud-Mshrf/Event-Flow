@@ -1,3 +1,4 @@
+using EventFlow.Application.Common.Helpers;
 using EventFlow.Application.Common.Interfaces;
 using Microsoft.Extensions.Logging;
 
@@ -31,4 +32,18 @@ public sealed class LogEmailSender(ILogger<LogEmailSender> logger) : IEmailSende
 
         return Task.CompletedTask;
     }
+    public Task SendTicketConfirmationAsync(
+    string toEmail,
+    string attendeeName,
+    string eventName,
+    string orderNumber,
+    IReadOnlyCollection<IssuedTicketInfo> tickets,
+    CancellationToken ct)
+{
+    logger.LogInformation(
+        "[EMAIL] Ticket confirmation for {Email} — Order {OrderNumber} — {Count} ticket(s) for {Event}",
+        toEmail, orderNumber, tickets.Count, eventName);
+
+    return Task.CompletedTask;
+}
 }
