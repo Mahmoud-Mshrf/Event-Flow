@@ -4,6 +4,7 @@ using EventFlow.Domain.Common.Results;
 using EventFlow.Domain.Events;
 using EventFlow.Domain.Orders;
 using EventFlow.Domain.Tickets.Enums;
+using EventFlow.Domain.Tickets.Events;
 using EventFlow.Domain.TicketTypes;
 using EventFlow.Domain.Users;
 
@@ -106,7 +107,13 @@ public class Ticket:AuditableEntity
 
         Status = TicketStatus.CheckedIn;
         CheckedInAt = checkedInAt;
-
+        AddDomainEvent(new AttendeeCheckedInDomainEvent
+        (
+            Id,
+            EventId,
+            TenantId,
+            checkedInAt
+        ));
         return Result.Success;
     }
 
