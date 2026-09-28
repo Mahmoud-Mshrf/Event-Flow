@@ -4,7 +4,7 @@ using EventFlow.Domain.Tickets;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 
-namespace EventFlow.Application.Features.Tickets.Commands.CheckInAttendee;
+namespace EventFlow.Application.Features.CheckIn.Commands.CheckInAttendee;
 
 public sealed class CheckInAttendeeCommandHandler(
     IAppDbContext db,

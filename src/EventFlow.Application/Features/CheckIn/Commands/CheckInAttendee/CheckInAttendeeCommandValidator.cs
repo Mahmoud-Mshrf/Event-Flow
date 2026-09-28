@@ -1,6 +1,6 @@
 using FluentValidation;
 
-namespace EventFlow.Application.Features.Tickets.Commands.CheckInAttendee;
+namespace EventFlow.Application.Features.CheckIn.Commands.CheckInAttendee;
 
 public sealed class CheckInAttendeeCommandValidator
     : AbstractValidator<CheckInAttendeeCommand>
