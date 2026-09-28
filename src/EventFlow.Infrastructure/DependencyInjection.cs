@@ -86,7 +86,10 @@ public static class DependencyInjection
 
             options.AddPolicy("TenantStaff", policy =>
                 policy.RequireAuthenticatedUser()
-                    .RequireClaim("tenant_id"));
+                    .RequireClaim("tenant_id")
+                    .RequireAssertion(ctx =>
+                        ctx.User.IsInRole(UserRole.Owner.ToString()) ||
+                        ctx.User.IsInRole(UserRole.Employee.ToString())));
 
             options.AddPolicy("CheckInStaff", policy =>
                 policy.RequireAuthenticatedUser()

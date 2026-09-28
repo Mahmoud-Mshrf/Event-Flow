@@ -3,6 +3,7 @@ using EventFlow.Domain.Common.Results;
 using EventFlow.Domain.Tickets;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Caching.Hybrid;
 
 namespace EventFlow.Application.Features.CheckIn.Commands.CheckInAttendee;
 
@@ -10,7 +11,7 @@ public sealed class CheckInAttendeeCommandHandler(
     IAppDbContext db,
     ICurrentTenant currentTenant,
     IQrCodeService qrCodeService,
-    IDateTimeProvider dateTimeProvider)
+    IDateTimeProvider dateTimeProvider, HybridCache cache)
     : IRequestHandler<CheckInAttendeeCommand, Result<CheckInResultDto>>
 {
     public async Task<Result<CheckInResultDto>> Handle(
@@ -71,7 +72,9 @@ public sealed class CheckInAttendeeCommandHandler(
         // 7. Persist — SaveChangesAsync dispatches AttendeeCheckedInDomainEvent
         //    The SignalR push happens after this commit succeeds
         await db.SaveChangesAsync(ct);
-
+        await cache.RemoveByTagAsync($"event-{request.EventId}-tickets", ct);
+        await cache.RemoveByTagAsync($"event-{request.EventId}-checkin", ct);
+        await cache.RemoveByTagAsync($"attendee-{ticket.AttendeeId}-tickets", ct);
         // 8. Return enough info for the check-in UI to show a confirmation screen
         //    "✓ Ahmed Mohamed — VIP — Checked in at 14:32"
         return new CheckInResultDto(
