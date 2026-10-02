@@ -1,6 +1,7 @@
 using EventFlow.Api.OpenApi.Transformers;
 using EventFlow.Application;
 using EventFlow.Infrastructure;
+using EventFlow.Infrastructure.Hubs;
 using Microsoft.OpenApi;
 using Scalar.AspNetCore;
 
@@ -11,7 +12,7 @@ builder.Services
     .AddInfrastructure(builder.Configuration,builder.Environment);
 
 builder.Services.AddControllers();
-
+builder.Services.AddSignalR();
 builder.Services.AddSingleton<BearerSecuritySchemeTransformer>();
 builder.Services.AddOpenApi(options =>
 {
@@ -34,7 +35,7 @@ if (app.Environment.IsDevelopment())
 
 app.UseAuthentication();
 app.UseAuthorization();
-
+app.MapHub<EventDashboardHub>("/hubs/event-dashboard");
 app.MapControllers();
 
 app.Run();

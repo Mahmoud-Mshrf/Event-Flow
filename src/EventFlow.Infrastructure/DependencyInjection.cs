@@ -60,6 +60,22 @@ public static class DependencyInjection
                 ValidAudience = configuration["JwtSettings:Audience"],
                 IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(configuration["JwtSettings:SigningKey"]))
             };
+            options.Events=new JwtBearerEvents
+            {
+                OnMessageReceived = context =>
+                {
+                    var token = context.Request.Query["access_token"];
+                    var path = context.Request.Path;
+
+                    if (!string.IsNullOrEmpty(token)&& path.StartsWithSegments("/hubs"))
+                    {
+                        context.Token = token;
+                    }
+                
+                    return Task.CompletedTask;
+
+                }
+            };
         });
         services.AddScoped<ITokenService, JwtTokenService>();
         services.AddScoped<IPasswordHasher, PasswordHasher>();
