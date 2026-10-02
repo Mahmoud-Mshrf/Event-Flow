@@ -5,6 +5,7 @@ using EventFlow.Application.Settings;
 using EventFlow.Domain.Users.Enums;
 using EventFlow.Infrastructure.Data;
 using EventFlow.Infrastructure.Helpers;
+using EventFlow.Infrastructure.Hubs;
 using EventFlow.Infrastructure.PaymentGateways.Paymob;
 using EventFlow.Infrastructure.PaymentGateways.Paymob.Service;
 using EventFlow.Infrastructure.Services;
@@ -80,7 +81,7 @@ public static class DependencyInjection
         services.AddScoped<ITokenService, JwtTokenService>();
         services.AddScoped<IPasswordHasher, PasswordHasher>();
         services.AddScoped<IEmailSender, SmtpEmailSender>(); // or LogEmailSender for dev
-
+        services.AddScoped<IEventDashboardNotifier,EventDashboardNotifier>();
         services.Configure<JwtSettings>(
             configuration.GetSection("JwtSettings"));
 
