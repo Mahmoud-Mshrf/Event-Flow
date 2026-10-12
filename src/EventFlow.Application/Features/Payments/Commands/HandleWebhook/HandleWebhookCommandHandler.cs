@@ -1,8 +1,10 @@
 using EventFlow.Application.Common.Interfaces;
 using EventFlow.Application.Features.Payments.Models;
+using EventFlow.Application.Messages;
 using EventFlow.Domain.Common.Results;
 using EventFlow.Domain.Payments;
 using EventFlow.Domain.Payments.Events;
+using MassTransit;
 using MediatR;
 using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
@@ -13,7 +15,8 @@ namespace EventFlow.Application.Features.Payments.Commands.HandleWebhook;
 public sealed class HandleWebhookCommandHandler(
     IAppDbContext db,
     IPaymentGateway paymentGateway,
-    HybridCache cache)
+    HybridCache cache,
+    IPublishEndpoint publishEndpoint)
     : IRequestHandler<HandleWebhookCommand, Result<Success>>
 {
     public async Task<Result<Success>> Handle(
@@ -59,59 +62,125 @@ public sealed class HandleWebhookCommandHandler(
         return Result.Success;
     }
 
-    private async Task<Result<Success>> HandlePaymentSucceeded(
-        PaymentWebhookEvent webhookEvent,
-        CancellationToken ct)
-    {
-        // ProviderReferenceId is whatever the gateway stored at initiation:
-        // Paymob  → orderNumber (from special_reference → merchant_order_id)
-        // Stripe  → PaymentIntent.Id
-        // Handler uses it for lookup without knowing which provider is active
-        var payment = await db.Payments
-            .IgnoreQueryFilters()
-            .FirstOrDefaultAsync(p =>
-                p.ProviderReferenceId == webhookEvent.ProviderReferenceId, ct);
+    // private async Task<Result<Success>> HandlePaymentSucceeded(
+    //     PaymentWebhookEvent webhookEvent,
+    //     CancellationToken ct)
+    // {
+    //     // ProviderReferenceId is whatever the gateway stored at initiation:
+    //     // Paymob  → orderNumber (from special_reference → merchant_order_id)
+    //     // Stripe  → PaymentIntent.Id
+    //     // Handler uses it for lookup without knowing which provider is active
+    //     var payment = await db.Payments
+    //         .IgnoreQueryFilters()
+    //         .FirstOrDefaultAsync(p =>
+    //             p.ProviderReferenceId == webhookEvent.ProviderReferenceId, ct);
 
-        if (payment is null)
-            return PaymentErrors.PaymentNotFound;
+    //     if (payment is null)
+    //         return PaymentErrors.PaymentNotFound;
 
-        // Domain rule: only Pending payments can succeed
-        // Also acts as second idempotency layer if ProcessedWebhookEvent somehow failed
-        var paymentResult = payment.MarkSucceeded(DateTime.UtcNow);
-        if (paymentResult.IsError)
-            return Result.Success;  // already succeeded — safe no-op
+    //     // Domain rule: only Pending payments can succeed
+    //     // Also acts as second idempotency layer if ProcessedWebhookEvent somehow failed
+    //     var paymentResult = payment.MarkSucceeded(DateTime.UtcNow);
+    //     if (paymentResult.IsError)
+    //         return Result.Success;  // already succeeded — safe no-op
 
-        // Load the order with its items
-        // Items needed by PaymentSucceededDomainEvent handler for ticket issuance
-        var order = await db.Orders
-            .IgnoreQueryFilters()
-            .Include(o => o.OrderItems)
-            .FirstOrDefaultAsync(o => o.Id == payment.OrderId, ct);
+    //     // Load the order with its items
+    //     // Items needed by PaymentSucceededDomainEvent handler for ticket issuance
+    //     var order = await db.Orders
+    //         .IgnoreQueryFilters()
+    //         .Include(o => o.OrderItems)
+    //         .FirstOrDefaultAsync(o => o.Id == payment.OrderId, ct);
 
-        if (order is null)
-            return PaymentErrors.OrderNotFound;
+    //     if (order is null)
+    //         return PaymentErrors.OrderNotFound;
 
-        var orderResult = order.MarkAsPaid(DateTime.UtcNow);
-        if (orderResult.IsError)
-            return Result.Success;  // already paid — safe no-op
+    //     var orderResult = order.MarkAsPaid(DateTime.UtcNow);
+    //     if (orderResult.IsError)
+    //         return Result.Success;  // already paid — safe no-op
 
-        // Raise domain event — dispatched after SaveChangesAsync
-        // → PaymentSucceededDomainEventHandler creates tickets and sends email
-        payment.AddDomainEvent(new PaymentSucceededDomainEvent(
-            payment.Id,
-            order.Id,
-            order.TenantId));
+    //     // Raise domain event — dispatched after SaveChangesAsync
+    //     // → PaymentSucceededDomainEventHandler creates tickets and sends email
+    //     payment.AddDomainEvent(new PaymentSucceededDomainEvent(
+    //         payment.Id,
+    //         order.Id,
+    //         order.TenantId));
 
-        // Persist both payment and order status changes atomically
-        await db.SaveChangesAsync(ct);
+    //     // Persist both payment and order status changes atomically
+    //     await db.SaveChangesAsync(ct);
 
-        // Invalidate order cache — attendee should now see "Paid" status
-        await cache.RemoveByTagAsync($"attendee-{order.AttendeeId}-orders", ct);
-        await cache.RemoveByTagAsync($"event-{order.EventId}-orders", ct);
+    //     // Invalidate order cache — attendee should now see "Paid" status
+    //     await cache.RemoveByTagAsync($"attendee-{order.AttendeeId}-orders", ct);
+    //     await cache.RemoveByTagAsync($"event-{order.EventId}-orders", ct);
 
+    //     return Result.Success;
+    // }
+
+// Inject IPublishEndpoint (MassTransit's publisher) alongside HybridCache
+private async Task<Result<Success>> HandlePaymentSucceeded(
+    PaymentWebhookEvent webhookEvent,
+    CancellationToken ct)
+{
+    var payment = await db.Payments
+        .IgnoreQueryFilters()
+        .FirstOrDefaultAsync(p =>
+            p.ProviderReferenceId == webhookEvent.ProviderReferenceId, ct);
+
+    if (payment is null)
+        return PaymentErrors.PaymentNotFound;
+
+    var paymentResult = payment.MarkSucceeded(DateTime.UtcNow);
+    if (paymentResult.IsError)
         return Result.Success;
-    }
 
+    var order = await db.Orders
+        .IgnoreQueryFilters()
+        .Include(o => o.OrderItems)
+        .Include(o => o.Attendee)
+        .FirstOrDefaultAsync(o => o.Id == payment.OrderId, ct);
+
+    if (order is null)
+        return PaymentErrors.OrderNotFound;
+
+    var orderResult = order.MarkAsPaid(DateTime.UtcNow);
+    if (orderResult.IsError)
+        return Result.Success;
+
+    // Load ticket type names — needed in the message so consumers don't reload
+    var ticketTypeIds = order.OrderItems.Select(i => i.TicketTypeId).ToList();
+    var ticketTypeNames = await db.TicketTypes
+        .IgnoreQueryFilters()
+        .Where(tt => ticketTypeIds.Contains(tt.Id))
+        .Select(tt => new { tt.Id, tt.Name })
+        .ToDictionaryAsync(tt => tt.Id, tt => tt.Name, ct);
+
+    var @event = await db.Events
+        .IgnoreQueryFilters()
+        .FirstOrDefaultAsync(e => e.Id == order.EventId, ct);
+
+    // Persist payment + order status change
+    await db.SaveChangesAsync(ct);
+
+    // Publish to RabbitMQ — fire and move on
+    // Both TicketIssuanceConsumer and EmailNotificationConsumer receive this
+    await publishEndpoint.Publish(new PaymentConfirmedMessage(
+        payment.Id,
+        order.Id,
+        order.TenantId,
+        order.AttendeeId,
+        order.Attendee.Email,
+        order.Attendee.Name,
+        @event?.EventName ?? "Event",
+        order.OrderNumber,
+        order.OrderItems.Select(i => new OrderItemMessage(
+            i.TicketTypeId,
+            ticketTypeNames.GetValueOrDefault(i.TicketTypeId, "Ticket"),
+            i.Quantity)).ToList()), ct);
+
+    await cache.RemoveByTagAsync($"attendee-{order.AttendeeId}-orders", ct);
+    await cache.RemoveByTagAsync($"event-{order.EventId}-orders", ct);
+
+    return Result.Success;
+}
     private async Task<Result<Success>> HandlePaymentFailed(
         PaymentWebhookEvent webhookEvent,
         CancellationToken ct)

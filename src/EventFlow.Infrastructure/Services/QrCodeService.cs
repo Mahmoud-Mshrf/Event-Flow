@@ -1,6 +1,7 @@
 using System.Security.Cryptography;
 using System.Text;
 using EventFlow.Application.Common.Interfaces;
+using EventFlow.Application.Settings;
 using Microsoft.Extensions.Options;
 
 namespace EventFlow.Infrastructure.Services;
