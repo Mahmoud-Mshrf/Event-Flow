@@ -6,6 +6,7 @@ using EventFlow.Domain.Users.Enums;
 using EventFlow.Infrastructure.Data;
 using EventFlow.Infrastructure.Helpers;
 using EventFlow.Infrastructure.Hubs;
+using EventFlow.Infrastructure.Messaging;
 using EventFlow.Infrastructure.PaymentGateways.Paymob;
 using EventFlow.Infrastructure.PaymentGateways.Paymob.Service;
 using EventFlow.Infrastructure.Services;
@@ -154,6 +155,7 @@ public static class DependencyInjection
         services.AddScoped<IPaymentGateway, PaymobPaymentGateway>();
         services.Configure<QrCodeSettings>(configuration.GetSection("QrCode"));
         services.AddScoped<IQrCodeService, QrCodeService>();
+        services.AddMessaging(configuration);
         return services;
         
     }
