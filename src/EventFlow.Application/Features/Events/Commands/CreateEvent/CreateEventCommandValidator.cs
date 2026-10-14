@@ -37,10 +37,6 @@ public sealed class CreateEventCommandValidator
             .LessThan(x => x.RegistrationEnd)
             .WithMessage(EventErrors.InvalidRegistrationPeriod.Description);
 
-        RuleFor(x => x.RegistrationStart)
-            .GreaterThan(dateTimeProvider.UtcNow)
-            .WithMessage(EventErrors.InvalidRegistrationPeriod.Description);
-
         RuleFor(x => x.RegistrationEnd)
             .GreaterThan(dateTimeProvider.UtcNow)
             .WithMessage(EventErrors.InvalidRegistrationPeriod.Description);

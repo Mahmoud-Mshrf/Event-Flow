@@ -30,10 +30,19 @@ public sealed class PublishEventCommandHandler(
         if (@event is null)
             return EventErrors.NotFound;
 
-        var result = @event.Publish(dateTimeProvider.UtcNow);
+        var now = dateTimeProvider.UtcNow;
+        var result = @event.Publish(now);
 
         if (result.IsError)
             return result.TopError;
+
+        if (now >= @event.RegistrationStart && now < @event.RegistrationEnd)
+        {
+            var openRegistrationResult = @event.OpenRegistration(now);
+
+            if (openRegistrationResult.IsError)
+                return openRegistrationResult.TopError;
+        }
 
         await db.SaveChangesAsync(ct);
 

@@ -99,8 +99,7 @@ public class Event : AuditableEntity
         if (startDate <= currentTime || startDate >= endDate)
             return EventErrors.InvalidSchedule;
 
-        if (registrationStart <= currentTime ||
-            registrationEnd <= currentTime ||
+        if (registrationEnd <= currentTime ||
             registrationStart >= registrationEnd ||
             registrationEnd >= startDate)
             return EventErrors.InvalidRegistrationPeriod;
@@ -301,4 +300,3 @@ public class Event : AuditableEntity
     private bool CanEdit() =>
         EventStatus is EventStatus.Draft or EventStatus.Published;
 }
-

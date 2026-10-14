@@ -1,88 +1,39 @@
 @baseUrl = http://localhost:5068
 
-# Use inboxes you can access. Registration and password-reset codes are sent by email.
+# Use inboxes you can access. Change these addresses before registering.
 @attendeeEmail = attendee.smoke@example.com
 @attendeePassword = SmokeTest123!
 @organizerEmail = organizer.smoke@example.com
 @organizerPassword = SmokeTest123!
 
-# Fill these after reading the OTP emails.
-@attendeeConfirmationCode = 278026
-@organizerConfirmationCode = 021802
-@passwordResetCode = REPLACE_WITH_PASSWORD_RESET_OTP
+# Copy the latest OTP from each registration email before sending its confirmation request.
+@attendeeConfirmationCode = REPLACE_WITH_ATTENDEE_OTP
+@organizerConfirmationCode = REPLACE_WITH_ORGANIZER_OTP
 
-# The Orders API requires an event whose registration is already open and a ticket
-# type whose sales window is active. There is currently no API endpoint to open
-# registration, so use IDs from suitable existing data here. For organizer event
-# orders/tickets and check-in, the event must also belong to the logged-in organizer.
-@orderEventId = d383d7d2-1e79-4fe4-985d-7594035ecc28
-@orderTicketTypeId = REPLACE_WITH_ON_SALE_TICKET_TYPE_ID
+# The result endpoint needs every signed query parameter from the Paymob redirect.
+@paymentResultQuery = REPLACE_WITH_FULL_SIGNED_REDIRECT_QUERY_WITHOUT_QUESTION_MARK
 
-# Payment redirect/webhook and check-in tests need real provider/ticket data.
-@paymentHmac = REPLACE_WITH_GATEWAY_REDIRECT_HMAC
-@ticketId = REPLACE_WITH_PAID_TICKET_ID
-@ticketQrCode = REPLACE_WITH_QR_CODE_FROM_TICKET_DETAILS
-
-### Browse public events
-GET {{baseUrl}}/api/public/events?page=1&pageSize=10&searchTerm=conference
-
-### Browse public event details
-# @name publicEventDetails
-GET {{baseUrl}}/api/public/events/{{orderEventId}}
-
-### Register attendee
-# @name registerAttendee
-POST {{baseUrl}}/api/auth/register/attendee
-Content-Type: application/json
-
-{
-  "name": "Smoke Test Attendee",
-  "email": "{{attendeeEmail}}",
-  "phoneNumber": "+12025550121",
-  "password": "{{attendeePassword}}"
-}
-
-### Resend attendee email confirmation (use the newest emailed OTP below)
-POST {{baseUrl}}/api/auth/resend-confirmation
-Content-Type: application/json
-
-{
-  "email": "{{attendeeEmail}}"
-}
-
-### Confirm attendee email
-POST {{baseUrl}}/api/auth/confirm-email
-Content-Type: application/json
-
-{
-  "email": "{{attendeeEmail}}",
-  "code": "{{attendeeConfirmationCode}}"
-}
-
-### Login attendee
-# @name attendeeLogin
-POST {{baseUrl}}/api/auth/login
-Content-Type: application/json
-
-{
-  "email": "{{attendeeEmail}}",
-  "password": "{{attendeePassword}}"
-}
+###############################################################################
+# 1. Account setup
+# Register each account once. On later runs, skip registration/confirmation and
+# send the login requests. Change the email address if you need a new account.
+###############################################################################
 
 ### Register organizer
+# @name registerOrganizer
 POST {{baseUrl}}/api/auth/register/organizer
 Content-Type: application/json
 
 {
   "name": "Smoke Test Organizer",
   "email": "{{organizerEmail}}",
-  "phoneNumber": "+12025550122",
+  "phoneNumber": "+201143128894",
   "password": "{{organizerPassword}}",
   "organizationName": "Smoke Test Events",
   "organizationDescription": "Organization used for the EventFlow API smoke test."
 }
 
-### Resend organizer email confirmation (use the newest emailed OTP below)
+### Resend organizer confirmation (optional; only if a new OTP is needed)
 POST {{baseUrl}}/api/auth/resend-confirmation
 Content-Type: application/json
 
@@ -109,6 +60,52 @@ Content-Type: application/json
   "password": "{{organizerPassword}}"
 }
 
+### Register attendee
+# @name registerAttendee
+POST {{baseUrl}}/api/auth/register/attendee
+Content-Type: application/json
+
+{
+  "name": "Smoke Test Attendee",
+  "email": "{{attendeeEmail}}",
+  "phoneNumber": "+201207193498",
+  "password": "{{attendeePassword}}"
+}
+
+### Resend attendee confirmation (optional; only if a new OTP is needed)
+POST {{baseUrl}}/api/auth/resend-confirmation
+Content-Type: application/json
+
+{
+  "email": "{{attendeeEmail}}"
+}
+
+### Confirm attendee email
+POST {{baseUrl}}/api/auth/confirm-email
+Content-Type: application/json
+
+{
+  "email": "{{attendeeEmail}}",
+  "code": "{{attendeeConfirmationCode}}"
+}
+
+### Login attendee
+# @name attendeeLogin
+POST {{baseUrl}}/api/auth/login
+Content-Type: application/json
+
+{
+  "email": "{{attendeeEmail}}",
+  "password": "{{attendeePassword}}"
+}
+
+###############################################################################
+# 2. Organizer event and ticket-type paths
+# These requests create and publish a separate event for event-management tests.
+# Publishing does not open registration in the current API, so this event is not
+# used by the checkout flow below.
+###############################################################################
+
 ### Create event
 # @name createEvent
 POST {{baseUrl}}/api/events
@@ -119,10 +116,10 @@ Content-Type: application/json
   "eventName": "EventFlow Smoke Test Conference",
   "description": "A sample event used to exercise the EventFlow API.",
   "location": "Convention Centre, Test City",
-  "startDate": "2030-06-15T09:00:00Z",
-  "endDate": "2030-06-15T17:00:00Z",
-  "registrationStart": "2030-01-01T00:00:00Z",
-  "registrationEnd": "2030-06-01T23:59:59Z",
+  "startDate": "2035-06-15T09:00:00Z",
+  "endDate": "2035-06-15T17:00:00Z",
+  "registrationStart": "2035-01-01T00:00:00Z",
+  "registrationEnd": "2035-06-01T23:59:59Z",
   "visibility": 0
 }
 
@@ -151,8 +148,8 @@ Authorization: Bearer {{organizerLogin.response.body.$.accessToken}}
 Content-Type: application/json
 
 {
-  "startDate": "2030-07-15T09:00:00Z",
-  "endDate": "2030-07-15T17:00:00Z"
+  "startDate": "2035-07-15T09:00:00Z",
+  "endDate": "2035-07-15T17:00:00Z"
 }
 
 ### Update event registration period
@@ -161,17 +158,17 @@ Authorization: Bearer {{organizerLogin.response.body.$.accessToken}}
 Content-Type: application/json
 
 {
-  "registrationStart": "2030-01-02T00:00:00Z",
-  "registrationEnd": "2030-07-01T23:59:59Z"
+  "registrationStart": "2035-01-02T00:00:00Z",
+  "registrationEnd": "2035-07-01T23:59:59Z"
 }
 
-### Update event visibility
+### Update event visibility (0 = public)
 PUT {{baseUrl}}/api/events/{{createEvent.response.body.$.id}}/visibility
 Authorization: Bearer {{organizerLogin.response.body.$.accessToken}}
 Content-Type: application/json
 
 {
-  "visibility": 1
+  "visibility": 0
 }
 
 ### List organizer events
@@ -192,8 +189,8 @@ Content-Type: application/json
   "name": "Smoke Test General Admission",
   "price": 25.00,
   "capacity": 100,
-  "salesStart": "2030-01-01T00:00:00Z",
-  "salesEnd": "2030-06-01T23:59:59Z"
+  "salesStart": "2035-01-01T00:00:00Z",
+  "salesEnd": "2035-06-01T23:59:59Z"
 }
 
 ### Update ticket type name
@@ -229,11 +226,11 @@ Authorization: Bearer {{organizerLogin.response.body.$.accessToken}}
 Content-Type: application/json
 
 {
-  "salesStart": "2030-01-02T00:00:00Z",
-  "salesEnd": "2030-07-01T23:59:59Z"
+  "salesStart": "2035-01-02T00:00:00Z",
+  "salesEnd": "2035-07-01T23:59:59Z"
 }
 
-### List ticket types for event
+### List ticket types for the new event
 GET {{baseUrl}}/api/events/{{createEvent.response.body.$.id}}/ticket-types?page=1&pageSize=10
 Authorization: Bearer {{organizerLogin.response.body.$.accessToken}}
 
@@ -245,63 +242,140 @@ Authorization: Bearer {{organizerLogin.response.body.$.accessToken}}
 POST {{baseUrl}}/api/events/{{createEvent.response.body.$.id}}/publish
 Authorization: Bearer {{organizerLogin.response.body.$.accessToken}}
 
-### Public event search
-GET {{baseUrl}}/api/public/events?page=1&pageSize=10&searchTerm=smoke
+### Browse public events
+GET {{baseUrl}}/api/public/events?page=1&pageSize=10&searchTerm=EventFlow
 
-### Get published event publicly
+### Get the published event publicly
 GET {{baseUrl}}/api/public/events/{{createEvent.response.body.$.id}}
 
-### Create order for attendee
-# Uses an existing registration-open event and active ticket type from the variables above.
+###############################################################################
+# 3. Organizer creates two events: accepting orders now and not accepting yet
+# The first event's registration and sales windows are active now. Publishing it
+# opens registration automatically. The second event's windows begin in 2098, so
+# publishing leaves it closed and the attendee order below should return 409.
+###############################################################################
+
+### Create event accepting registration now
+# @name createOpenEvent
+POST {{baseUrl}}/api/events
+Authorization: Bearer {{organizerLogin.response.body.$.accessToken}}
+Content-Type: application/json
+
+{
+  "eventName": "EventFlow Open Registration Smoke Test",
+  "description": "An event configured to accept registrations and ticket orders now.",
+  "location": "Convention Centre, Test City",
+  "startDate": "2100-06-15T09:00:00Z",
+  "endDate": "2100-06-15T17:00:00Z",
+  "registrationStart": "2000-01-01T00:00:00Z",
+  "registrationEnd": "2099-06-01T23:59:59Z",
+  "visibility": 0
+}
+
+### Add ticket type on sale now
+# @name createOpenTicketType
+POST {{baseUrl}}/api/events/{{createOpenEvent.response.body.$.id}}/ticket-types
+Authorization: Bearer {{organizerLogin.response.body.$.accessToken}}
+Content-Type: application/json
+
+{
+  "name": "Open Smoke Test Ticket",
+  "price": 25.00,
+  "capacity": 100,
+  "salesStart": "2000-01-01T00:00:00Z",
+  "salesEnd": "2099-06-01T23:59:59Z"
+}
+
+### Publish event and open registration immediately
+POST {{baseUrl}}/api/events/{{createOpenEvent.response.body.$.id}}/publish
+Authorization: Bearer {{organizerLogin.response.body.$.accessToken}}
+
+### Verify the public event reports registration open
+GET {{baseUrl}}/api/public/events/{{createOpenEvent.response.body.$.id}}
+
+### Create event whose registration and sales start in the future
+# @name createFutureEvent
+POST {{baseUrl}}/api/events
+Authorization: Bearer {{organizerLogin.response.body.$.accessToken}}
+Content-Type: application/json
+
+{
+  "eventName": "EventFlow Future Registration Smoke Test",
+  "description": "An event configured to begin accepting registrations in the future.",
+  "location": "Convention Centre, Test City",
+  "startDate": "2100-06-15T09:00:00Z",
+  "endDate": "2100-06-15T17:00:00Z",
+  "registrationStart": "2098-01-01T00:00:00Z",
+  "registrationEnd": "2099-06-01T23:59:59Z",
+  "visibility": 0
+}
+
+### Add ticket type not yet on sale
+# @name createFutureTicketType
+POST {{baseUrl}}/api/events/{{createFutureEvent.response.body.$.id}}/ticket-types
+Authorization: Bearer {{organizerLogin.response.body.$.accessToken}}
+Content-Type: application/json
+
+{
+  "name": "Future Smoke Test Ticket",
+  "price": 25.00,
+  "capacity": 100,
+  "salesStart": "2098-01-01T00:00:00Z",
+  "salesEnd": "2099-06-01T23:59:59Z"
+}
+
+### Publish future event (registration remains closed while the window is in the future)
+POST {{baseUrl}}/api/events/{{createFutureEvent.response.body.$.id}}/publish
+Authorization: Bearer {{organizerLogin.response.body.$.accessToken}}
+
+### Verify the public event reports registration closed
+GET {{baseUrl}}/api/public/events/{{createFutureEvent.response.body.$.id}}
+
+### Expected failure: attendee cannot order before future registration/sales start
+# @name rejectOrderBeforeRegistration
+POST {{baseUrl}}/api/orders
+Authorization: Bearer {{attendeeLogin.response.body.$.accessToken}}
+Content-Type: application/json
+
+{
+  "eventId": "{{createFutureEvent.response.body.$.id}}",
+  "items": [
+    {
+      "ticketTypeId": "{{createFutureTicketType.response.body.$.id}}",
+      "quantity": 1
+    }
+  ]
+}
+
+###############################################################################
+# 4. Attendee happy path: order tickets, pay, then verify tickets
+###############################################################################
+
+### Create order
 # @name createOrder
 POST {{baseUrl}}/api/orders
 Authorization: Bearer {{attendeeLogin.response.body.$.accessToken}}
 Content-Type: application/json
 
 {
-  "eventId": "{{orderEventId}}",
+  "eventId": "{{createOpenEvent.response.body.$.id}}",
   "items": [
     {
-      "ticketTypeId": "{{orderTicketTypeId}}",
+      "ticketTypeId": "{{createOpenTicketType.response.body.$.id}}",
       "quantity": 1
     }
   ]
 }
+
+### Get the newly created order
+GET {{baseUrl}}/api/orders/{{createOrder.response.body.$.id}}
+Authorization: Bearer {{attendeeLogin.response.body.$.accessToken}}
 
 ### List attendee orders
 GET {{baseUrl}}/api/orders/my-orders?page=1&pageSize=10
 Authorization: Bearer {{attendeeLogin.response.body.$.accessToken}}
 
-### Get order details
-GET {{baseUrl}}/api/orders/{{createOrder.response.body.$.id}}
-Authorization: Bearer {{attendeeLogin.response.body.$.accessToken}}
-
-### Create a separate pending order for the cancel-order request
-# @name createOrderForCancellation
-POST {{baseUrl}}/api/orders
-Authorization: Bearer {{attendeeLogin.response.body.$.accessToken}}
-Content-Type: application/json
-
-{
-  "eventId": "{{orderEventId}}",
-  "items": [
-    {
-      "ticketTypeId": "{{orderTicketTypeId}}",
-      "quantity": 1
-    }
-  ]
-}
-
-### List event orders (organizer view)
-GET {{baseUrl}}/api/events/{{orderEventId}}/orders?page=1&pageSize=10
-Authorization: Bearer {{organizerLogin.response.body.$.accessToken}}
-
-### List event tickets (organizer view)
-GET {{baseUrl}}/api/events/{{orderEventId}}/tickets?page=1&pageSize=10
-Authorization: Bearer {{organizerLogin.response.body.$.accessToken}}
-
-### Initiate payment for pending order
-# Requires the payment gateway to be configured.
+### Initiate payment for the pending order
 # @name initiatePayment
 POST {{baseUrl}}/api/payments/initiate
 Authorization: Bearer {{attendeeLogin.response.body.$.accessToken}}
@@ -311,56 +385,79 @@ Content-Type: application/json
   "orderId": "{{createOrder.response.body.$.id}}"
 }
 
-### Get payment result after returning from the provider
-# Replace the HMAC and include all redirect query parameters required by the configured gateway.
-GET {{baseUrl}}/api/payments/result?merchant_order_id={{initiatePayment.response.body.$.orderNumber}}&success=true&hmac={{paymentHmac}}
+# Copy paymentUrl from initiatePayment's response, open it in a browser, and
+# complete payment with the Paymob test-card details for your configured account.
+# A real Paymob setup and reachable RedirectionUrl/NotificationUrl are required
+# for payment confirmation and ticket issuance. The API does not mark an order
+# paid merely because payment was initiated.
+# Paymob sends its signed server callback to the configured /api/payments/webhook;
+# do not send an empty/fabricated webhook body to simulate payment success.
 
-### Payment gateway webhook
-# For a meaningful test, send the exact raw payload and signature/query parameters from the configured provider.
-POST {{baseUrl}}/api/payments/webhook
-Content-Type: application/json
+### Recheck a Paymob redirect result (optional; paste the complete signed query string above)
+GET {{baseUrl}}/api/payments/result?{{paymentResultQuery}}
 
-{}
-
-### List attendee tickets
+### Verify tickets were issued after the successful provider callback
+# @name myTickets
 GET {{baseUrl}}/api/tickets/my-tickets?page=1&pageSize=10
 Authorization: Bearer {{attendeeLogin.response.body.$.accessToken}}
 
-### Get ticket details and QR code
-GET {{baseUrl}}/api/tickets/{{ticketId}}
+### Get ticket details and QR code for the first returned ticket
+# @name ticketDetails
+GET {{baseUrl}}/api/tickets/{{myTickets.response.body.$.items[0].id}}
 Authorization: Bearer {{attendeeLogin.response.body.$.accessToken}}
 
-### Check in attendee using the ticket QR code
-POST {{baseUrl}}/api/events/{{orderEventId}}/check-in
+###############################################################################
+# 5. Organizer order and check-in paths
+###############################################################################
+
+### List event orders
+GET {{baseUrl}}/api/events/{{createOpenEvent.response.body.$.id}}/orders?page=1&pageSize=10
+Authorization: Bearer {{organizerLogin.response.body.$.accessToken}}
+
+### List event tickets
+GET {{baseUrl}}/api/events/{{createOpenEvent.response.body.$.id}}/tickets?page=1&pageSize=10
+Authorization: Bearer {{organizerLogin.response.body.$.accessToken}}
+
+### List ticket types for the event
+GET {{baseUrl}}/api/events/{{createOpenEvent.response.body.$.id}}/ticket-types?page=1&pageSize=10
+Authorization: Bearer {{organizerLogin.response.body.$.accessToken}}
+
+### Check in attendee using the paid ticket QR code
+POST {{baseUrl}}/api/events/{{createOpenEvent.response.body.$.id}}/check-in
 Authorization: Bearer {{organizerLogin.response.body.$.accessToken}}
 Content-Type: application/json
 
 {
-  "qrCode": "{{ticketQrCode}}"
+  "qrCode": "{{ticketDetails.response.body.$.qrCode}}"
 }
 
 ### Get event check-in statistics
-GET {{baseUrl}}/api/events/{{orderEventId}}/check-in/stats
+GET {{baseUrl}}/api/events/{{createOpenEvent.response.body.$.id}}/check-in/stats
 Authorization: Bearer {{organizerLogin.response.body.$.accessToken}}
 
-### Request password reset
-POST {{baseUrl}}/api/auth/forgot-password
+###############################################################################
+# 6. Other order and authentication paths
+###############################################################################
+
+### Create a second pending order for cancellation testing
+# @name createOrderForCancellation
+POST {{baseUrl}}/api/orders
+Authorization: Bearer {{attendeeLogin.response.body.$.accessToken}}
 Content-Type: application/json
 
 {
-  "email": "{{attendeeEmail}}"
+  "eventId": "{{createOpenEvent.response.body.$.id}}",
+  "items": [
+    {
+      "ticketTypeId": "{{createOpenTicketType.response.body.$.id}}",
+      "quantity": 1
+    }
+  ]
 }
 
-### Reset attendee password (use the OTP from the password-reset email)
-POST {{baseUrl}}/api/auth/reset-password
-Content-Type: application/json
-
-{
-  "email": "{{attendeeEmail}}",
-  "code": "{{passwordResetCode}}",
-  "newPassword": "SmokeTest456!",
-  "confirmPassword": "SmokeTest456!"
-}
+### Cancel the second pending order
+DELETE {{baseUrl}}/api/orders/{{createOrderForCancellation.response.body.$.id}}
+Authorization: Bearer {{attendeeLogin.response.body.$.accessToken}}
 
 ### Refresh attendee access and refresh tokens
 # @name refreshAttendee
@@ -381,15 +478,43 @@ Content-Type: application/json
   "refreshToken": "{{refreshAttendee.response.body.$.refreshToken}}"
 }
 
-### Cancel a pending order
-# Run against a separate pending order; the order used for payment may already be paid.
-DELETE {{baseUrl}}/api/orders/{{createOrderForCancellation.response.body.$.id}}
-Authorization: Bearer {{attendeeLogin.response.body.$.accessToken}}
+###############################################################################
+# 7. Optional account maintenance and cleanup
+# Password reset changes the attendee password; update @attendeePassword before
+# logging in again. Cleanup is destructive and should only be run for test data.
+###############################################################################
 
-### Cancel event
+### Request attendee password reset
+POST {{baseUrl}}/api/auth/forgot-password
+Content-Type: application/json
+
+{
+  "email": "{{attendeeEmail}}"
+}
+
+### Reset attendee password (use the OTP from the password-reset email)
+POST {{baseUrl}}/api/auth/reset-password
+Content-Type: application/json
+
+{
+  "email": "{{attendeeEmail}}",
+  "code": "REPLACE_WITH_PASSWORD_RESET_OTP",
+  "newPassword": "SmokeTest456!",
+  "confirmPassword": "SmokeTest456!"
+}
+
+### Cancel the event created by this file (optional; destructive)
 POST {{baseUrl}}/api/events/{{createEvent.response.body.$.id}}/cancel
 Authorization: Bearer {{organizerLogin.response.body.$.accessToken}}
 
-### Delete smoke-test ticket type
+### Delete the ticket type created by this file (optional; destructive)
 DELETE {{baseUrl}}/api/events/{{createEvent.response.body.$.id}}/ticket-types/{{createTicketType.response.body.$.id}}
+Authorization: Bearer {{organizerLogin.response.body.$.accessToken}}
+
+### Cancel the open-registration event created by this file (optional; destructive)
+POST {{baseUrl}}/api/events/{{createOpenEvent.response.body.$.id}}/cancel
+Authorization: Bearer {{organizerLogin.response.body.$.accessToken}}
+
+### Cancel the future-registration event created by this file (optional; destructive)
+POST {{baseUrl}}/api/events/{{createFutureEvent.response.body.$.id}}/cancel
 Authorization: Bearer {{organizerLogin.response.body.$.accessToken}}
