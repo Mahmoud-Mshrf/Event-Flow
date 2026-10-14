@@ -1,8 +1,11 @@
+using System.Text.Json.Serialization;
+
 namespace EventFlow.Domain.Common.Errors;
 
 public class Error
 {
-    private Error(string code, string description, ErrorType type)
+    [JsonConstructor]
+    public Error(string code, string description, ErrorType type)
     {
         Code = code;
         Description = description;

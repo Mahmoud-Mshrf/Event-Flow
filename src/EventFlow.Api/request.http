@@ -1,8 +1,8 @@
 @baseUrl = http://localhost:5068
-@token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIwNmY5ZDk5OS1iNzVjLTRhMDYtOGQ0NC1jYjQyMzdhY2JiMTgiLCJlbWFpbCI6Im1vbXNocmYxMTFAZ21haWwuY29tIiwidGVuYW50X2lkIjoiOWMzNTBiOTctNjI2MS00NTA5LTlmMTYtYmUyMDViZTNiODVhIiwiaHR0cDovL3NjaGVtYXMubWljcm9zb2Z0LmNvbS93cy8yMDA4LzA2L2lkZW50aXR5L2NsYWltcy9yb2xlIjoiT3duZXIiLCJleHAiOjE3OTA1NDU0NDYsImlzcyI6IkV2ZW50RmxvdyIsImF1ZCI6IkV2ZW50RmxvdyJ9.yC6G9fDW-vAljdlKpTghbA3XbGfi-DnN0p7-b0Cz7ww
-@eventId=9803fc41-2621-43f1-965e-4b4503542ebd
-@ticketTypeId=bd754aad-2d2b-42ec-9faf-f326016636f4
-@AttendeeToken=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI5YTgzYWQyNy1kODQxLTQxYzctYjhlOS0wMjIyMDcwN2VkZjMiLCJlbWFpbCI6Im1haG1vdWRtc2hyZjIzN0BnbWFpbC5jb20iLCJleHAiOjE3OTA1NDUyMDksImlzcyI6IkV2ZW50RmxvdyIsImF1ZCI6IkV2ZW50RmxvdyJ9.AdhAxTIN5DUU9lPmU17U5J0PxDbr_oxOh1xtE9uTNYk
+@token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxNzNhZGJmMS0zMWM4LTQxYmEtYjUxZi04NzYzMGEyZWUxM2QiLCJlbWFpbCI6Im1vbXNocmYxMTFAZ21haWwuY29tIiwidGVuYW50X2lkIjoiMjYwOTVjOTItNjliNy00ODA3LWI1ODctOTk5ZDM2OTE4ZmU3IiwiaHR0cDovL3NjaGVtYXMubWljcm9zb2Z0LmNvbS93cy8yMDA4LzA2L2lkZW50aXR5L2NsYWltcy9yb2xlIjoiT3duZXIiLCJleHAiOjE3OTE5ODc3MDQsImlzcyI6IkV2ZW50RmxvdyIsImF1ZCI6IkV2ZW50RmxvdyJ9.vr-rl8wVoR1ybXTOkp62Da3lXwvb_l12ZDwFyXgtulQ
+@eventId=91b9d1d0-9a84-403e-871f-d8f18d26165e
+@ticketTypeId=b7093233-c3eb-40ce-aace-ca1e2707da04
+@AttendeeToken=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIwY2UyYmJiNi1lZjA4LTQ2NWUtYTYxYy0yZWQ1ODE1MTc3N2QiLCJlbWFpbCI6Im1haG1vdWRtc2hyZjIzN0BnbWFpbC5jb20iLCJleHAiOjE3OTE5ODc1ODAsImlzcyI6IkV2ZW50RmxvdyIsImF1ZCI6IkV2ZW50RmxvdyJ9.c7zUSE0x3Mo_rce1w_GPLUU61bKT5G2hBnnBoc82tF8
 ###
 POST {{baseUrl}}/api/auth/register/attendee
 Content-Type: application/json
@@ -56,7 +56,7 @@ Content-Type: application/json
 
 {
     "Email":"momshrf111@gmail.com",
-    "Code":"438815"
+    "Code":"596709"
 }
 
 ###
@@ -87,7 +87,7 @@ Content-Type: application/json
 }
 
 ###
-POST {{baseUrl}}/api/events/0f3383b8-ae5b-4f50-a98b-00aaa52a0c5a/ticket-types
+POST {{baseUrl}}/api/events/{{eventId}}/ticket-types
 Authorization: Bearer {{token}}
 Content-Type: application/json
 

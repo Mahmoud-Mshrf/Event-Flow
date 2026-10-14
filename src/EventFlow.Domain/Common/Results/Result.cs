@@ -74,6 +74,8 @@ public sealed class Result<T> : IResult<T>
     public T Value => IsSuccess ? _value! : default!;
     public List<Error>? Errors =>
         IsError ? new (_errors!) :[];
+
+    [JsonIgnore]
     public Error TopError =>
         (_errors!.Count > 0 ) ? _errors[0] : default!;
 
@@ -92,4 +94,3 @@ public readonly record struct Success;
 public readonly record struct Created;
 public readonly record struct Deleted;
 public readonly record struct Updated;
-

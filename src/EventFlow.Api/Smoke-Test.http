@@ -1,0 +1,395 @@
+@baseUrl = http://localhost:5068
+
+# Use inboxes you can access. Registration and password-reset codes are sent by email.
+@attendeeEmail = attendee.smoke@example.com
+@attendeePassword = SmokeTest123!
+@organizerEmail = organizer.smoke@example.com
+@organizerPassword = SmokeTest123!
+
+# Fill these after reading the OTP emails.
+@attendeeConfirmationCode = 278026
+@organizerConfirmationCode = 021802
+@passwordResetCode = REPLACE_WITH_PASSWORD_RESET_OTP
+
+# The Orders API requires an event whose registration is already open and a ticket
+# type whose sales window is active. There is currently no API endpoint to open
+# registration, so use IDs from suitable existing data here. For organizer event
+# orders/tickets and check-in, the event must also belong to the logged-in organizer.
+@orderEventId = d383d7d2-1e79-4fe4-985d-7594035ecc28
+@orderTicketTypeId = REPLACE_WITH_ON_SALE_TICKET_TYPE_ID
+
+# Payment redirect/webhook and check-in tests need real provider/ticket data.
+@paymentHmac = REPLACE_WITH_GATEWAY_REDIRECT_HMAC
+@ticketId = REPLACE_WITH_PAID_TICKET_ID
+@ticketQrCode = REPLACE_WITH_QR_CODE_FROM_TICKET_DETAILS
+
+### Browse public events
+GET {{baseUrl}}/api/public/events?page=1&pageSize=10&searchTerm=conference
+
+### Browse public event details
+# @name publicEventDetails
+GET {{baseUrl}}/api/public/events/{{orderEventId}}
+
+### Register attendee
+# @name registerAttendee
+POST {{baseUrl}}/api/auth/register/attendee
+Content-Type: application/json
+
+{
+  "name": "Smoke Test Attendee",
+  "email": "{{attendeeEmail}}",
+  "phoneNumber": "+12025550121",
+  "password": "{{attendeePassword}}"
+}
+
+### Resend attendee email confirmation (use the newest emailed OTP below)
+POST {{baseUrl}}/api/auth/resend-confirmation
+Content-Type: application/json
+
+{
+  "email": "{{attendeeEmail}}"
+}
+
+### Confirm attendee email
+POST {{baseUrl}}/api/auth/confirm-email
+Content-Type: application/json
+
+{
+  "email": "{{attendeeEmail}}",
+  "code": "{{attendeeConfirmationCode}}"
+}
+
+### Login attendee
+# @name attendeeLogin
+POST {{baseUrl}}/api/auth/login
+Content-Type: application/json
+
+{
+  "email": "{{attendeeEmail}}",
+  "password": "{{attendeePassword}}"
+}
+
+### Register organizer
+POST {{baseUrl}}/api/auth/register/organizer
+Content-Type: application/json
+
+{
+  "name": "Smoke Test Organizer",
+  "email": "{{organizerEmail}}",
+  "phoneNumber": "+12025550122",
+  "password": "{{organizerPassword}}",
+  "organizationName": "Smoke Test Events",
+  "organizationDescription": "Organization used for the EventFlow API smoke test."
+}
+
+### Resend organizer email confirmation (use the newest emailed OTP below)
+POST {{baseUrl}}/api/auth/resend-confirmation
+Content-Type: application/json
+
+{
+  "email": "{{organizerEmail}}"
+}
+
+### Confirm organizer email
+POST {{baseUrl}}/api/auth/confirm-email
+Content-Type: application/json
+
+{
+  "email": "{{organizerEmail}}",
+  "code": "{{organizerConfirmationCode}}"
+}
+
+### Login organizer
+# @name organizerLogin
+POST {{baseUrl}}/api/auth/login
+Content-Type: application/json
+
+{
+  "email": "{{organizerEmail}}",
+  "password": "{{organizerPassword}}"
+}
+
+### Create event
+# @name createEvent
+POST {{baseUrl}}/api/events
+Authorization: Bearer {{organizerLogin.response.body.$.accessToken}}
+Content-Type: application/json
+
+{
+  "eventName": "EventFlow Smoke Test Conference",
+  "description": "A sample event used to exercise the EventFlow API.",
+  "location": "Convention Centre, Test City",
+  "startDate": "2030-06-15T09:00:00Z",
+  "endDate": "2030-06-15T17:00:00Z",
+  "registrationStart": "2030-01-01T00:00:00Z",
+  "registrationEnd": "2030-06-01T23:59:59Z",
+  "visibility": 0
+}
+
+### Update event details
+PUT {{baseUrl}}/api/events/{{createEvent.response.body.$.id}}/details
+Authorization: Bearer {{organizerLogin.response.body.$.accessToken}}
+Content-Type: application/json
+
+{
+  "eventName": "EventFlow Smoke Test Conference Updated",
+  "description": "Updated sample event details for the API smoke test."
+}
+
+### Update event location
+PUT {{baseUrl}}/api/events/{{createEvent.response.body.$.id}}/location
+Authorization: Bearer {{organizerLogin.response.body.$.accessToken}}
+Content-Type: application/json
+
+{
+  "location": "Updated Convention Centre, Test City"
+}
+
+### Update event schedule
+PUT {{baseUrl}}/api/events/{{createEvent.response.body.$.id}}/schedule
+Authorization: Bearer {{organizerLogin.response.body.$.accessToken}}
+Content-Type: application/json
+
+{
+  "startDate": "2030-07-15T09:00:00Z",
+  "endDate": "2030-07-15T17:00:00Z"
+}
+
+### Update event registration period
+PUT {{baseUrl}}/api/events/{{createEvent.response.body.$.id}}/registration-period
+Authorization: Bearer {{organizerLogin.response.body.$.accessToken}}
+Content-Type: application/json
+
+{
+  "registrationStart": "2030-01-02T00:00:00Z",
+  "registrationEnd": "2030-07-01T23:59:59Z"
+}
+
+### Update event visibility
+PUT {{baseUrl}}/api/events/{{createEvent.response.body.$.id}}/visibility
+Authorization: Bearer {{organizerLogin.response.body.$.accessToken}}
+Content-Type: application/json
+
+{
+  "visibility": 0
+}
+
+### List organizer events
+GET {{baseUrl}}/api/events?page=1&pageSize=10
+Authorization: Bearer {{organizerLogin.response.body.$.accessToken}}
+
+### Get event by ID
+GET {{baseUrl}}/api/events/{{createEvent.response.body.$.id}}
+Authorization: Bearer {{organizerLogin.response.body.$.accessToken}}
+
+### Create ticket type
+# @name createTicketType
+POST {{baseUrl}}/api/events/{{createEvent.response.body.$.id}}/ticket-types
+Authorization: Bearer {{organizerLogin.response.body.$.accessToken}}
+Content-Type: application/json
+
+{
+  "name": "Smoke Test General Admission",
+  "price": 25.00,
+  "capacity": 100,
+  "salesStart": "2030-01-01T00:00:00Z",
+  "salesEnd": "2030-06-01T23:59:59Z"
+}
+
+### Update ticket type name
+PUT {{baseUrl}}/api/events/{{createEvent.response.body.$.id}}/ticket-types/{{createTicketType.response.body.$.id}}/name
+Authorization: Bearer {{organizerLogin.response.body.$.accessToken}}
+Content-Type: application/json
+
+{
+  "name": "Smoke Test Standard Admission"
+}
+
+### Update ticket type price
+PUT {{baseUrl}}/api/events/{{createEvent.response.body.$.id}}/ticket-types/{{createTicketType.response.body.$.id}}/price
+Authorization: Bearer {{organizerLogin.response.body.$.accessToken}}
+Content-Type: application/json
+
+{
+  "price": 30.00
+}
+
+### Update ticket type capacity
+PUT {{baseUrl}}/api/events/{{createEvent.response.body.$.id}}/ticket-types/{{createTicketType.response.body.$.id}}/capacity
+Authorization: Bearer {{organizerLogin.response.body.$.accessToken}}
+Content-Type: application/json
+
+{
+  "capacity": 120
+}
+
+### Update ticket type sales window
+PUT {{baseUrl}}/api/events/{{createEvent.response.body.$.id}}/ticket-types/{{createTicketType.response.body.$.id}}/sales-window
+Authorization: Bearer {{organizerLogin.response.body.$.accessToken}}
+Content-Type: application/json
+
+{
+  "salesStart": "2030-01-02T00:00:00Z",
+  "salesEnd": "2030-07-01T23:59:59Z"
+}
+
+### List ticket types for event
+GET {{baseUrl}}/api/events/{{createEvent.response.body.$.id}}/ticket-types?page=1&pageSize=10
+Authorization: Bearer {{organizerLogin.response.body.$.accessToken}}
+
+### Get ticket type by ID
+GET {{baseUrl}}/api/events/{{createEvent.response.body.$.id}}/ticket-types/{{createTicketType.response.body.$.id}}
+Authorization: Bearer {{organizerLogin.response.body.$.accessToken}}
+
+### Publish event (requires at least one ticket type)
+POST {{baseUrl}}/api/events/{{createEvent.response.body.$.id}}/publish
+Authorization: Bearer {{organizerLogin.response.body.$.accessToken}}
+
+### Public event search
+GET {{baseUrl}}/api/public/events?page=1&pageSize=10&searchTerm=smoke
+
+### Get published event publicly
+GET {{baseUrl}}/api/public/events/{{createEvent.response.body.$.id}}
+
+### Create order for attendee
+# Uses an existing registration-open event and active ticket type from the variables above.
+# @name createOrder
+POST {{baseUrl}}/api/orders
+Authorization: Bearer {{attendeeLogin.response.body.$.accessToken}}
+Content-Type: application/json
+
+{
+  "eventId": "{{orderEventId}}",
+  "items": [
+    {
+      "ticketTypeId": "{{orderTicketTypeId}}",
+      "quantity": 1
+    }
+  ]
+}
+
+### List attendee orders
+GET {{baseUrl}}/api/orders/my-orders?page=1&pageSize=10
+Authorization: Bearer {{attendeeLogin.response.body.$.accessToken}}
+
+### Get order details
+GET {{baseUrl}}/api/orders/{{createOrder.response.body.$.id}}
+Authorization: Bearer {{attendeeLogin.response.body.$.accessToken}}
+
+### Create a separate pending order for the cancel-order request
+# @name createOrderForCancellation
+POST {{baseUrl}}/api/orders
+Authorization: Bearer {{attendeeLogin.response.body.$.accessToken}}
+Content-Type: application/json
+
+{
+  "eventId": "{{orderEventId}}",
+  "items": [
+    {
+      "ticketTypeId": "{{orderTicketTypeId}}",
+      "quantity": 1
+    }
+  ]
+}
+
+### List event orders (organizer view)
+GET {{baseUrl}}/api/events/{{orderEventId}}/orders?page=1&pageSize=10
+Authorization: Bearer {{organizerLogin.response.body.$.accessToken}}
+
+### List event tickets (organizer view)
+GET {{baseUrl}}/api/events/{{orderEventId}}/tickets?page=1&pageSize=10
+Authorization: Bearer {{organizerLogin.response.body.$.accessToken}}
+
+### Initiate payment for pending order
+# Requires the payment gateway to be configured.
+# @name initiatePayment
+POST {{baseUrl}}/api/payments/initiate
+Authorization: Bearer {{attendeeLogin.response.body.$.accessToken}}
+Content-Type: application/json
+
+{
+  "orderId": "{{createOrder.response.body.$.id}}"
+}
+
+### Get payment result after returning from the provider
+# Replace the HMAC and include all redirect query parameters required by the configured gateway.
+GET {{baseUrl}}/api/payments/result?merchant_order_id={{initiatePayment.response.body.$.orderNumber}}&success=true&hmac={{paymentHmac}}
+
+### Payment gateway webhook
+# For a meaningful test, send the exact raw payload and signature/query parameters from the configured provider.
+POST {{baseUrl}}/api/payments/webhook
+Content-Type: application/json
+
+{}
+
+### List attendee tickets
+GET {{baseUrl}}/api/tickets/my-tickets?page=1&pageSize=10
+Authorization: Bearer {{attendeeLogin.response.body.$.accessToken}}
+
+### Get ticket details and QR code
+GET {{baseUrl}}/api/tickets/{{ticketId}}
+Authorization: Bearer {{attendeeLogin.response.body.$.accessToken}}
+
+### Check in attendee using the ticket QR code
+POST {{baseUrl}}/api/events/{{orderEventId}}/check-in
+Authorization: Bearer {{organizerLogin.response.body.$.accessToken}}
+Content-Type: application/json
+
+{
+  "qrCode": "{{ticketQrCode}}"
+}
+
+### Get event check-in statistics
+GET {{baseUrl}}/api/events/{{orderEventId}}/check-in/stats
+Authorization: Bearer {{organizerLogin.response.body.$.accessToken}}
+
+### Request password reset
+POST {{baseUrl}}/api/auth/forgot-password
+Content-Type: application/json
+
+{
+  "email": "{{attendeeEmail}}"
+}
+
+### Reset attendee password (use the OTP from the password-reset email)
+POST {{baseUrl}}/api/auth/reset-password
+Content-Type: application/json
+
+{
+  "email": "{{attendeeEmail}}",
+  "code": "{{passwordResetCode}}",
+  "newPassword": "SmokeTest456!",
+  "confirmPassword": "SmokeTest456!"
+}
+
+### Refresh attendee access and refresh tokens
+# @name refreshAttendee
+POST {{baseUrl}}/api/auth/refresh
+Content-Type: application/json
+
+{
+  "accessToken": "{{attendeeLogin.response.body.$.accessToken}}",
+  "refreshToken": "{{attendeeLogin.response.body.$.refreshToken}}"
+}
+
+### Log out attendee and revoke the rotated refresh token
+POST {{baseUrl}}/api/auth/logout
+Authorization: Bearer {{refreshAttendee.response.body.$.accessToken}}
+Content-Type: application/json
+
+{
+  "refreshToken": "{{refreshAttendee.response.body.$.refreshToken}}"
+}
+
+### Cancel a pending order
+# Run against a separate pending order; the order used for payment may already be paid.
+DELETE {{baseUrl}}/api/orders/{{createOrderForCancellation.response.body.$.id}}
+Authorization: Bearer {{attendeeLogin.response.body.$.accessToken}}
+
+### Cancel event
+POST {{baseUrl}}/api/events/{{createEvent.response.body.$.id}}/cancel
+Authorization: Bearer {{organizerLogin.response.body.$.accessToken}}
+
+### Delete smoke-test ticket type
+DELETE {{baseUrl}}/api/events/{{createEvent.response.body.$.id}}/ticket-types/{{createTicketType.response.body.$.id}}
+Authorization: Bearer {{organizerLogin.response.body.$.accessToken}}
