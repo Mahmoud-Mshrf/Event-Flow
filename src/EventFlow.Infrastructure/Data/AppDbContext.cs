@@ -16,11 +16,20 @@ using Org.BouncyCastle.Math.EC.Rfc7748;
 
 namespace EventFlow.Infrastructure.Data;
 
-public sealed class AppDbContext(
-    DbContextOptions<AppDbContext> options,
-    ICurrentTenant currentTenant,
-    IPublisher publisher) : DbContext(options), IAppDbContext
+public sealed class AppDbContext : DbContext, IAppDbContext
 {
+    private readonly IPublisher _publisher;
+
+    public AppDbContext(
+        DbContextOptions<AppDbContext> options,
+        IPublisher publisher)
+        : base(options)
+    {
+        _publisher = publisher;
+    }
+
+    public Guid? CurrentTenantId { get; set; }
+
     public DbSet<User> Users => Set<User>();
     public DbSet<Tenant> Tenants => Set<Tenant>();
     public DbSet<Event> Events => Set<Event>();
@@ -57,22 +66,22 @@ public sealed class AppDbContext(
         //
         // For strict tenant staff isolation we use non-null filter:
         modelBuilder.Entity<Event>()
-            .HasQueryFilter(e => e.TenantId == currentTenant.TenantGuid);
+            .HasQueryFilter(e => e.TenantId == CurrentTenantId);
 
         modelBuilder.Entity<TicketType>()
-            .HasQueryFilter(tt => tt.TenantId == currentTenant.TenantGuid);
+            .HasQueryFilter(tt => tt.TenantId == CurrentTenantId);
 
         modelBuilder.Entity<Order>()
-            .HasQueryFilter(o => o.TenantId == currentTenant.TenantGuid);
+            .HasQueryFilter(o => o.TenantId == CurrentTenantId);
 
         modelBuilder.Entity<OrderItem>()
-            .HasQueryFilter(oi => oi.TenantId == currentTenant.TenantGuid);
+            .HasQueryFilter(oi => oi.TenantId == CurrentTenantId);
 
         modelBuilder.Entity<Payment>()
-            .HasQueryFilter(p => p.TenantId == currentTenant.TenantGuid);
+            .HasQueryFilter(p => p.TenantId == CurrentTenantId);
 
         modelBuilder.Entity<Ticket>()
-            .HasQueryFilter(t => t.TenantId == currentTenant.TenantGuid);
+            .HasQueryFilter(t => t.TenantId == CurrentTenantId);
 
         // User: staff only (non-null TenantId matching current tenant)
         // Attendees (null TenantId) are accessed via IgnoreQueryFilters
@@ -115,19 +124,13 @@ public sealed class AppDbContext(
         // Dispatch domain events after successful commit
         // MediatR calls each INotificationHandler<TEvent>
         foreach (var domainEvent in domainEvents)
-            await publisher.Publish(domainEvent, cancellationToken);
+            await _publisher.Publish(domainEvent, cancellationToken);
 
         return result;
     }
 }
 
-// Stub implementations for design-time only — never registered in DI
-internal sealed class NullCurrentTenant : ICurrentTenant
-{
-    public string? TenantId => null;
-    public Guid? TenantGuid => null;
-}
-
+// Stub implementation for design-time only — never registered in DI
 internal sealed class NullPublisher : IPublisher
 {
     public Task Publish(object notification, CancellationToken ct = default)

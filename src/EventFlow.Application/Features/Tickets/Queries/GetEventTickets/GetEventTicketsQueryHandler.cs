@@ -22,7 +22,7 @@ public sealed class GetEventTicketsQueryHandler(
         var query = db.Tickets
             .AsNoTracking()
             .Include(t => t.Event)
-            .Where(t => t.TenantId == tenantId && t.EventId == request.EventId);
+            .Where(t => t.EventId == request.EventId);
 
         if (request.Status.HasValue)
             query = query.Where(t => t.Status == request.Status.Value);

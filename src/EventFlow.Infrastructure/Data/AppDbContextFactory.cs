@@ -14,11 +14,8 @@ public sealed class AppDbContextFactory
         optionsBuilder.UseSqlServer(
             "Data Source=(localdb)\\MSSQLLocalDB;Initial Catalog=EventFlow;Integrated Security=True;");
 
-        // Null tenant for design-time — filters use null so migrations
-        // see all rows (no filter applied at migration generation time)
         return new AppDbContext(
             optionsBuilder.Options,
-            new NullCurrentTenant(),
             new NullPublisher());
     }
 }

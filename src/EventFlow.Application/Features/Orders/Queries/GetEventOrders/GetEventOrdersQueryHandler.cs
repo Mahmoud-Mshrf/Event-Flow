@@ -23,7 +23,7 @@ public sealed class GetEventOrdersQueryHandler(
         var query = db.Orders
             .AsNoTracking()
             .Include(o => o.Event)
-            .Where(o => o.TenantId == tenantId && o.EventId == request.EventId);
+            .Where(o => o.EventId == request.EventId);
 
         if (request.Status.HasValue)
             query = query.Where(o => o.OrderStatus == request.Status.Value);

@@ -21,7 +21,7 @@ public sealed class GetCheckInStatsQueryHandler(
         // Group by status in one query — more efficient than two separate counts
         var stats = await db.Tickets
             .AsNoTracking()
-            .Where(t => t.TenantId == tenantId && t.EventId == request.EventId)
+            .Where(t => t.EventId == request.EventId)
             .GroupBy(t => t.Status)
             .Select(g => new { Status = g.Key, Count = g.Count() })
             .ToListAsync(ct);

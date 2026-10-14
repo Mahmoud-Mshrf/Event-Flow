@@ -2,6 +2,7 @@ using EventFlow.Api.OpenApi.Transformers;
 using EventFlow.Application;
 using EventFlow.Infrastructure;
 using EventFlow.Infrastructure.Hubs;
+using EventFlow.Infrastructure.Middleware;
 using Microsoft.OpenApi;
 using Scalar.AspNetCore;
 
@@ -34,6 +35,7 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseAuthentication();
+app.UseMiddleware<TenantQueryFilterMiddleware>();
 app.UseAuthorization();
 app.MapHub<EventDashboardHub>("/hubs/event-dashboard");
 app.MapControllers();
