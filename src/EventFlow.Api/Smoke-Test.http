@@ -11,7 +11,7 @@
 @organizerConfirmationCode = REPLACE_WITH_ORGANIZER_OTP
 
 # The result endpoint needs every signed query parameter from the Paymob redirect.
-@paymentResultQuery = REPLACE_WITH_FULL_SIGNED_REDIRECT_QUERY_WITHOUT_QUESTION_MARK
+@paymentResultQuery = id=554076855&pending=false&amount_cents=2500&success=true&is_auth=false&is_capture=false&is_standalone_payment=true&is_voided=false&is_refunded=false&is_3d_secure=true&integration_id=5944413&profile_id=1233789&has_parent_transaction=false&order=632329214&created_at=2026-10-15T00%3A44%3A00.557149&currency=EGP&merchant_commission=0&accept_fees=0&discount_details=%5B%5D&amount_cents_int=2500&is_void=false&is_refund=false&error_occured=false&refunded_amount_cents=0&refunded_amount_cents_int=0&captured_amount=0&captured_amount_int=0&settlement_amount_cents_int=0&accept_fees_cents_int=0&vat_cents_int=0&updated_at=2026-10-15T00%3A44%3A23.595041&is_settled=false&bill_balanced=false&is_bill=false&owner=2478413&merchant_order_id=Ord-20261014214309-9953&data.message=Approved&source_data.type=card&source_data.pan=0007&source_data.sub_type=MasterCard&acq_response_code=00&txn_response_code=APPROVED&hmac=c86a080f77e0b708643f469108dc4277609b98feabb7d489aa1e7d4baaa348db815f0e8b99d49db1053742073e17e151f183d51a0a11591b3293dc32b1228e14
 
 ###############################################################################
 # 1. Account setup

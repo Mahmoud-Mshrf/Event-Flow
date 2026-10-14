@@ -17,19 +17,18 @@ public sealed class GetMyOrdersQueryHandler(
         GetMyOrdersQuery request,
         CancellationToken ct)
     {
-        var x = "not authenticated user";
-        System.Console.WriteLine($"Attende Id Is : {currentUser.UserId.ToString()?? x}");
-        // Load orders with their events for the event name
+        var userId = currentUser.UserId;
+
         var totalCount = await db.Orders
             .IgnoreQueryFilters()       // attendee has no TenantId
-            .Where(o => o.AttendeeId == currentUser.UserId)
+            .Where(o => o.AttendeeId == userId)
             .CountAsync(ct);
 
         var orders = await db.Orders
             .AsNoTracking()
             .IgnoreQueryFilters()
             .Include(o => o.Event)
-            .Where(o => o.AttendeeId == currentUser.UserId)
+            .Where(o => o.AttendeeId == userId)
             .OrderByDescending(o => o.CreatedAtUtc)
             .Skip((request.Page - 1) * request.PageSize)
             .Take(request.PageSize)

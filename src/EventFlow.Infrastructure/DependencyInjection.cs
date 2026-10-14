@@ -1,4 +1,6 @@
+using System.IdentityModel.Tokens.Jwt;
 using System.Net.Http.Headers;
+using System.Security.Claims;
 using System.Text;
 using EventFlow.Application.Common.Interfaces;
 using EventFlow.Application.Settings;
@@ -53,6 +55,7 @@ public static class DependencyInjection
         .AddJwtBearer(options =>
         {
             options.MapInboundClaims = false;
+
             options.TokenValidationParameters = new TokenValidationParameters
             {
                 ValidateIssuer = true,
@@ -61,25 +64,44 @@ public static class DependencyInjection
                 ValidateIssuerSigningKey = true,
                 ValidIssuer = configuration["JwtSettings:Issuer"],
                 ValidAudience = configuration["JwtSettings:Audience"],
-                IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(configuration["JwtSettings:SigningKey"]))
+                IssuerSigningKey = new SymmetricSecurityKey(
+                    Encoding.UTF8.GetBytes(configuration["JwtSettings:SigningKey"]!)),
+
+                NameClaimType = JwtRegisteredClaimNames.Sub,
+                RoleClaimType = ClaimTypes.Role
             };
-            options.Events=new JwtBearerEvents
+
+            options.Events = new JwtBearerEvents
             {
                 OnMessageReceived = context =>
                 {
                     var token = context.Request.Query["access_token"];
                     var path = context.Request.Path;
 
-                    if (!string.IsNullOrEmpty(token)&& path.StartsWithSegments("/hubs"))
+                    if (!string.IsNullOrEmpty(token) && path.StartsWithSegments("/hubs"))
                     {
                         context.Token = token;
                     }
-                
-                    return Task.CompletedTask;
 
+                    return Task.CompletedTask;
+                },
+
+                // ---- TEMP DIAGNOSTICS (remove after testing) ----
+                OnAuthenticationFailed = context =>
+                {
+                    Console.WriteLine($"[JWT] Authentication FAILED: {context.Exception.GetType().Name} - {context.Exception.Message}");
+                    return Task.CompletedTask;
+                },
+                OnTokenValidated = context =>
+                {
+                    Console.WriteLine("[JWT] Token validated. Claims:");
+                    foreach (var c in context.Principal!.Claims)
+                        Console.WriteLine($"[JWT]   {c.Type} = {c.Value}");
+                    return Task.CompletedTask;
                 }
+                // -------------------------------------------------
             };
-        });
+        });;
         services.AddScoped<ITokenService, JwtTokenService>();
         services.AddScoped<IPasswordHasher, PasswordHasher>();
         services.AddScoped<IEmailSender, SmtpEmailSender>(); // or LogEmailSender for dev

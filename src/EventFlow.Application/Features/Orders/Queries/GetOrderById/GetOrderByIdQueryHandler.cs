@@ -17,8 +17,8 @@ public sealed class GetOrderByIdQueryHandler(
         GetOrderByIdQuery request,
         CancellationToken ct)
     {
-        var x = "not authenticated user";
-        System.Console.WriteLine($"Attende Id Is : {currentUser.UserId.ToString()?? x}");
+        var userId = currentUser.UserId;
+
         var order = await db.Orders
             .AsNoTracking()
             .IgnoreQueryFilters()
@@ -26,12 +26,11 @@ public sealed class GetOrderByIdQueryHandler(
             .Include(o => o.Event)
             .FirstOrDefaultAsync(o =>
                 o.Id == request.OrderId &&
-                o.AttendeeId == currentUser.UserId, ct);
+                o.AttendeeId == userId, ct);
 
         if (order is null)
             return OrderErrors.NotFound;
 
-        // Load ticket type names for order items
         var ticketTypeIds = order.OrderItems.Select(i => i.TicketTypeId).ToList();
 
         var ticketTypeNames = await db.TicketTypes

@@ -53,6 +53,10 @@ public sealed class OrdersController(
         [FromQuery] PageRequest page,
         CancellationToken ct)
     {
+        Console.WriteLine($"[Endpoint] User authenticated: {User.Identity?.IsAuthenticated}");
+        Console.WriteLine($"[Endpoint] Auth header: {Request.Headers.Authorization}");
+        foreach (var c in User.Claims)
+            Console.WriteLine($"[Endpoint]   {c.Type} = {c.Value}");
         var result = await sender.Send(new GetMyOrdersQuery
         {
             AttendeeId = currentUser.UserId,
@@ -72,6 +76,10 @@ public sealed class OrdersController(
         Guid orderId,
         CancellationToken ct)
     {
+        Console.WriteLine($"[Endpoint] User authenticated: {User.Identity?.IsAuthenticated}");
+        Console.WriteLine($"[Endpoint] Auth header: {Request.Headers.Authorization}");
+        foreach (var c in User.Claims)
+            Console.WriteLine($"[Endpoint]   {c.Type} = {c.Value}");
         var result = await sender.Send(
             new GetOrderByIdQuery(orderId, currentUser.UserId), ct);
 

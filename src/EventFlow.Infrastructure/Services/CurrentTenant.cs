@@ -4,10 +4,20 @@ using Microsoft.AspNetCore.Http;
 
 namespace EventFlow.Infrastructure.Services;
 
-public sealed class CurrentTenant(IHttpContextAccessor httpContextAccessor) : ICurrentTenant
+public sealed class CurrentTenant : ICurrentTenant
 {
+    // Capture the HttpContext object while still inside the request flow.
+    // Reading IHttpContextAccessor lazily returns null after HybridCache
+    // moves execution to a different context.
+    private readonly HttpContext? _httpContext;
+
+    public CurrentTenant(IHttpContextAccessor httpContextAccessor)
+    {
+        _httpContext = httpContextAccessor.HttpContext;
+    }
+
     public string? TenantId =>
-        httpContextAccessor.HttpContext?.User.FindFirstValue("tenant_id");
+        _httpContext?.User.FindFirstValue("tenant_id");
 
     public Guid? TenantGuid =>
         Guid.TryParse(TenantId, out var id) ? id : null;
