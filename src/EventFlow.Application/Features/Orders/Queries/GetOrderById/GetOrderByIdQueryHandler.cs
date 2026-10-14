@@ -17,9 +17,8 @@ public sealed class GetOrderByIdQueryHandler(
         GetOrderByIdQuery request,
         CancellationToken ct)
     {
-        if (!currentUser.IsAuthenticated)
-            return OrderErrors.Unauthenticated;
-
+        var x = "not authenticated user";
+        System.Console.WriteLine($"Attende Id Is : {currentUser.UserId.ToString()?? x}");
         var order = await db.Orders
             .AsNoTracking()
             .IgnoreQueryFilters()

@@ -19,5 +19,5 @@ public sealed class CurrentUser(IHttpContextAccessor httpContextAccessor) : ICur
     }
 
     public bool IsAuthenticated =>
-        httpContextAccessor.HttpContext?.User.Identity?.IsAuthenticated ?? false;
+        httpContextAccessor.HttpContext?.User.Identities.Any(identity => identity.IsAuthenticated) ?? false;
 }

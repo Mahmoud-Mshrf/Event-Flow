@@ -1,4 +1,5 @@
 using EventFlow.Application.Common.Interfaces;
+using EventFlow.Domain.Common.Results;
 using MediatR;
 using Microsoft.Extensions.Caching.Hybrid;
 using Microsoft.Extensions.Logging;
@@ -24,7 +25,7 @@ public sealed class CachingBehavior<TRequest, TResponse>(
             typeof(TRequest).Name,
             cachedRequest.CacheKey);
 
-        return await cache.GetOrCreateAsync<TResponse>(
+        var response = await cache.GetOrCreateAsync<TResponse>(
             cachedRequest.CacheKey,
             async _ =>
             {
@@ -41,5 +42,13 @@ public sealed class CachingBehavior<TRequest, TResponse>(
             },
             cachedRequest.Tags,
             ct);
+
+        if (response is IResult { IsSuccess: false })
+        {
+            foreach (var tag in cachedRequest.Tags)
+                await cache.RemoveByTagAsync(tag, ct);
+        }
+
+        return response;
     }
 }
