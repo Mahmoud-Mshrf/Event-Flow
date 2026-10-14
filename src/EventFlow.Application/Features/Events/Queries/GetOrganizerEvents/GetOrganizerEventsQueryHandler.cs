@@ -11,19 +11,19 @@ using Microsoft.EntityFrameworkCore;
 namespace EventFlow.Application.Features.Events.Queries.GetOrganizerEvents;
 
 public sealed class GetOrganizerEventsQueryHandler(
-    IAppDbContext db,
-    ICurrentTenant currentTenant)
+    IAppDbContext db)
     : IRequestHandler<GetOrganizerEventsQuery, Result<PaginatedList<EventDto>>>
 {
     public async Task<Result<PaginatedList<EventDto>>> Handle(
         GetOrganizerEventsQuery request,
         CancellationToken ct)
     {
-        if (currentTenant.TenantGuid is not { } tenantId)
+        if (request.TenantId is not { } tenantId)
             return EventErrors.InvalidTenant;
 
         var result = await db.Events
             .AsNoTracking()
+            .Where(e => e.TenantId == tenantId)
             .Where(e => !request.Status.HasValue || e.EventStatus == request.Status.Value)
             .Where(e => !request.Visibility.HasValue || e.Visibility == request.Visibility.Value)
             .OrderByDescending(e => e.StartDate)
