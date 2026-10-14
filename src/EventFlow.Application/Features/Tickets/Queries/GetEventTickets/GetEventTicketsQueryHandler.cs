@@ -9,23 +9,20 @@ using Microsoft.EntityFrameworkCore;
 namespace EventFlow.Application.Features.Tickets.Queries.GetEventTickets;
 
 public sealed class GetEventTicketsQueryHandler(
-    IAppDbContext db,
-    ICurrentTenant currentTenant)
+    IAppDbContext db)
     : IRequestHandler<GetEventTicketsQuery, Result<PaginatedList<TicketSummaryDto>>>
 {
     public async Task<Result<PaginatedList<TicketSummaryDto>>> Handle(
         GetEventTicketsQuery request,
         CancellationToken ct)
     {
-        if (currentTenant.TenantGuid is not { } tenantId)
+        if (request.TenantId is not { } tenantId)
             return TicketErrors.Unauthenticated;
 
         var query = db.Tickets
             .AsNoTracking()
             .Include(t => t.Event)
-            .Where(t => t.EventId == request.EventId);
-            // Global filter already scopes to TenantId
-            // No .Where(t => t.TenantId == tenantId) needed
+            .Where(t => t.TenantId == tenantId && t.EventId == request.EventId);
 
         if (request.Status.HasValue)
             query = query.Where(t => t.Status == request.Status.Value);

@@ -12,7 +12,6 @@ namespace EventFlow.Application.Features.TicketTypes.Queries.GetTicketTypesByEve
 
 public sealed class GetTicketTypesByEventQueryHandler(
     IAppDbContext db,
-    ICurrentTenant currentTenant,
     IDateTimeProvider dateTimeProvider)
     : IRequestHandler<GetTicketTypesByEventQuery, Result<PaginatedList<TicketTypeDto>>>
 {
@@ -20,14 +19,14 @@ public sealed class GetTicketTypesByEventQueryHandler(
         GetTicketTypesByEventQuery request,
         CancellationToken ct)
     {
-        if (currentTenant.TenantGuid is not { } tenantId)
+        if (request.TenantId is not { } tenantId)
             return TicketTypeErrors.TenantIdRequired;
 
         var now = dateTimeProvider.UtcNow;
 
         var result = await db.TicketTypes
             .AsNoTracking()
-            .Where(tt => tt.EventId == request.EventId)
+            .Where(tt => tt.TenantId == tenantId && tt.EventId == request.EventId)
             .OrderBy(tt => tt.Price)
             .Select(tt => tt.ToDto(now))
             .ToPaginatedListAsync(request.Page, request.PageSize, ct);

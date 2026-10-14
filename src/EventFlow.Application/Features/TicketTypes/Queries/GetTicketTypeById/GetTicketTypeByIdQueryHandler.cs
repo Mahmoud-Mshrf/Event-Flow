@@ -10,7 +10,6 @@ namespace EventFlow.Application.Features.TicketTypes.Queries.GetTicketTypeById;
 
 public sealed class GetTicketTypeByIdQueryHandler(
     IAppDbContext db,
-    ICurrentTenant currentTenant,
     IDateTimeProvider dateTimeProvider)
     : IRequestHandler<GetTicketTypeByIdQuery, Result<TicketTypeDto>>
 {
@@ -18,12 +17,14 @@ public sealed class GetTicketTypeByIdQueryHandler(
         GetTicketTypeByIdQuery request,
         CancellationToken ct)
     {
-        if (currentTenant.TenantGuid is not { } tenantId)
+        if (request.TenantId is not { } tenantId)
             return TicketTypeErrors.TenantIdRequired;
 
         var ticketType = await db.TicketTypes
             .AsNoTracking()
-            .FirstOrDefaultAsync(tt => tt.Id == request.TicketTypeId, ct);
+            .FirstOrDefaultAsync(
+                tt => tt.Id == request.TicketTypeId && tt.TenantId == tenantId,
+                ct);
 
         if (ticketType is null)
             return TicketTypeErrors.NotFound;

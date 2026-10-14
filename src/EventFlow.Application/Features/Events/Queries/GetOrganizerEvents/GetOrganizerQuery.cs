@@ -13,7 +13,7 @@ public sealed record GetOrganizerEventsQuery : PageRequest, ICachedQuery<Result<
     public EventVisibility? Visibility { get; init; }
 
     public string CacheKey =>
-        $"tenant-events:{TenantId}:all:{Status}:{Visibility}:{Page}:{PageSize}";
+        $"tenant-events-v2:{TenantId}:all:{Status}:{Visibility}:{Page}:{PageSize}";
 
     public string[] Tags => [$"tenant-{TenantId}-events"];
 

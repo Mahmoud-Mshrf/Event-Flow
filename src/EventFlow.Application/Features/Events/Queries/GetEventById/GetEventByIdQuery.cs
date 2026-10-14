@@ -8,7 +8,7 @@ public sealed record GetEventByIdQuery(
     Guid EventId,
     Guid? TenantId) : ICachedQuery<Result<EventDto>>
 {
-    public string CacheKey => $"tenant-events:{TenantId}:{EventId}";
+    public string CacheKey => $"tenant-event-v2:{TenantId}:{EventId}";
 
     public string[] Tags => [$"tenant-{TenantId}-events"];
 

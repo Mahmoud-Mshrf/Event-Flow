@@ -8,21 +8,20 @@ using Microsoft.EntityFrameworkCore;
 namespace EventFlow.Application.Features.CheckIn.Queries.GetCheckInStats;
 
 public sealed class GetCheckInStatsQueryHandler(
-    IAppDbContext db,
-    ICurrentTenant currentTenant)
+    IAppDbContext db)
     : IRequestHandler<GetCheckInStatsQuery, Result<CheckInStatsDto>>
 {
     public async Task<Result<CheckInStatsDto>> Handle(
         GetCheckInStatsQuery request,
         CancellationToken ct)
     {
-        if (currentTenant.TenantGuid is not { } tenantId)
+        if (request.TenantId is not { } tenantId)
             return CheckInErrors.Unauthorized;
 
         // Group by status in one query — more efficient than two separate counts
         var stats = await db.Tickets
             .AsNoTracking()
-            .Where(t => t.EventId == request.EventId)
+            .Where(t => t.TenantId == tenantId && t.EventId == request.EventId)
             .GroupBy(t => t.Status)
             .Select(g => new { Status = g.Key, Count = g.Count() })
             .ToListAsync(ct);

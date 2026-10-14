@@ -5,13 +5,15 @@ using EventFlow.Domain.Common.Results;
 using EventFlow.Domain.Events;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Caching.Hybrid;
 
 namespace EventFlow.Application.Features.Events.Commands.CreateEvent;
 
 public sealed class CreateEventCommandHandler(
     IAppDbContext context,
     ICurrentTenant currentTenant,
-    IDateTimeProvider dateTimeProvider)
+    IDateTimeProvider dateTimeProvider,
+    HybridCache cache)
     : IRequestHandler<CreateEventCommand, Result<EventDto>>
 {
     public async Task<Result<EventDto>> Handle(
@@ -40,6 +42,7 @@ public sealed class CreateEventCommandHandler(
 
         await context.Events.AddAsync(result.Value, cancellationToken);
         await context.SaveChangesAsync(cancellationToken);
+        await cache.RemoveByTagAsync($"tenant-{tenantId}-events", cancellationToken);
 
         return result.Value.ToDto();
     }

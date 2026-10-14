@@ -9,20 +9,21 @@ using Microsoft.EntityFrameworkCore;
 namespace EventFlow.Application.Features.Events.Queries.GetEventById;
 
 public sealed class GetEventByIdQueryHandler(
-    IAppDbContext db,
-    ICurrentTenant currentTenant)
+    IAppDbContext db)
     : IRequestHandler<GetEventByIdQuery, Result<EventDto>>
 {
     public async Task<Result<EventDto>> Handle(
         GetEventByIdQuery request,
         CancellationToken ct)
     {
-        if (currentTenant.TenantGuid is not { } tenantId)
+        if (request.TenantId is not { } tenantId)
             return EventErrors.InvalidTenant;
 
         var @event = await db.Events
             .AsNoTracking()
-            .FirstOrDefaultAsync(e => e.Id == request.EventId, ct);
+            .FirstOrDefaultAsync(
+                e => e.Id == request.EventId && e.TenantId == tenantId,
+                ct);
 
         if (@event is null)
             return EventErrors.NotFound;
