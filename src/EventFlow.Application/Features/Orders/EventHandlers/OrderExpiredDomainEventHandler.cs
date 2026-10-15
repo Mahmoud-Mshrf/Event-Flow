@@ -34,6 +34,12 @@ internal sealed class OrderExpiredDomainEventHandler(IAppDbContext dbContext)
             ticketType?.Release(item.Quantity);
         }
 
+        var payment =await dbContext.Payments.FirstOrDefaultAsync(x=>x.OrderId==notification.OrderId);
+        if(payment is not null)
+        {
+            payment!.MarkFailed("Order expired",DateTime.UtcNow);
+        }
+
         await dbContext.SaveChangesAsync(ct);
     }
 }

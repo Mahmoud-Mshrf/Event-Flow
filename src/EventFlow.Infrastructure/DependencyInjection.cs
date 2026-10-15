@@ -178,6 +178,7 @@ public static class DependencyInjection
 
         services.AddScoped<IPaymentGateway, PaymobPaymentGateway>();
         services.Configure<QrCodeSettings>(configuration.GetSection("QrCode"));
+        services.Configure<VerificationTokenSettings>(configuration.GetSection("VerificationTokens"));
         services.AddScoped<IQrCodeService, QrCodeService>();
         services.AddMessaging(configuration);
         services.AddHostedService<OrderExpirationJob>();

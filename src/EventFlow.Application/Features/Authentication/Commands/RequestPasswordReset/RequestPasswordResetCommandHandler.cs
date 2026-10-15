@@ -1,20 +1,26 @@
 using System.Security.Cryptography;
 using EventFlow.Application.Common.Helpers;
 using EventFlow.Application.Common.Interfaces;
+using EventFlow.Application.Settings;
 using EventFlow.Domain.Common.Results;
 using EventFlow.Domain.Identity;
 using EventFlow.Domain.Users.Events;
+using MassTransit.Configuration;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Options;
 
 namespace EventFlow.Application.Features.Authentication.Commands.RequestPasswordReset;
 
 public sealed class RequestPasswordResetCommandHandler(
     IAppDbContext db,
-    IPasswordHasher passwordHasher) : IRequestHandler<RequestPasswordResetCommand, Result<Success>>
+    IPasswordHasher passwordHasher,IOptions<VerificationTokenSettings> tokenSettings) : IRequestHandler<RequestPasswordResetCommand, Result<Success>>
 {
     public async Task<Result<Success>> Handle(RequestPasswordResetCommand request, CancellationToken ct)
     {
+
+        var settings = tokenSettings.Value;
+        var expiry = TimeSpan.FromMinutes(settings.PasswordResetExpiryMinutes);
         // 1. Look up the user — but never reveal whether the email exists or not
         var user = await db.Users
             .FirstOrDefaultAsync(u => u.Email == request.Email, ct);
@@ -45,7 +51,7 @@ public sealed class RequestPasswordResetCommandHandler(
             user.Id,
             VerificationTokenType.PasswordReset,
             codeHash,
-            validFor: TimeSpan.FromMinutes(15));
+            validFor:expiry);
 
         // 5. Raise domain event — email sends after commit, non-blocking
         user.AddDomainEvent(new PasswordResetRequestedDomainEvent(user.Email, rawCode));
