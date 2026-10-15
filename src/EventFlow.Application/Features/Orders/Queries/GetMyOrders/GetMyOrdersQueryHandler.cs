@@ -3,6 +3,7 @@ using EventFlow.Application.Common.Interfaces;
 using EventFlow.Application.Features.Orders.Dtos;
 using EventFlow.Application.Features.Orders.Mappers;
 using EventFlow.Domain.Common.Results;
+using EventFlow.Domain.Orders;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 
@@ -18,6 +19,8 @@ public sealed class GetMyOrdersQueryHandler(
         CancellationToken ct)
     {
         var userId = currentUser.UserId;
+        if (!currentUser.IsAuthenticated || userId == Guid.Empty)
+            return OrderErrors.Unauthenticated;
 
         var totalCount = await db.Orders
             .IgnoreQueryFilters()       // attendee has no TenantId

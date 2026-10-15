@@ -99,7 +99,8 @@ public class Event : AuditableEntity
         if (startDate <= currentTime || startDate >= endDate)
             return EventErrors.InvalidSchedule;
 
-        if (registrationEnd <= currentTime ||
+        if (registrationStart <= currentTime ||
+            registrationEnd <= currentTime ||
             registrationStart >= registrationEnd ||
             registrationEnd >= startDate)
             return EventErrors.InvalidRegistrationPeriod;

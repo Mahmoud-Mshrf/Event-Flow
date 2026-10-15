@@ -120,6 +120,7 @@ private async Task<Result<Success>> HandlePaymentSucceeded(
     PaymentWebhookEvent webhookEvent,
     CancellationToken ct)
 {
+    System.Console.WriteLine("Payment Succeed \n Payment Succeed \n Payment Succeed \n Payment Succeed \n Payment Succeed \n");
     var payment = await db.Payments
         .IgnoreQueryFilters()
         .FirstOrDefaultAsync(p =>

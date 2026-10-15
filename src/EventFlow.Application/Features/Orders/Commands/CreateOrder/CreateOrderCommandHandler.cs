@@ -23,7 +23,7 @@ public sealed class CreateOrderCommandHandler(
         CancellationToken ct)
     {
         // 1. Confirm the caller is an authenticated attendee
-        if (!currentUser.IsAuthenticated)
+        if (!currentUser.IsAuthenticated || currentUser.UserId == Guid.Empty)
             return OrderErrors.Unauthenticated;
 
         var attendeeId = currentUser.UserId;

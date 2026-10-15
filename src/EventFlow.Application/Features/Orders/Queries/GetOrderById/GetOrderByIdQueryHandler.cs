@@ -18,6 +18,8 @@ public sealed class GetOrderByIdQueryHandler(
         CancellationToken ct)
     {
         var userId = currentUser.UserId;
+        if (!currentUser.IsAuthenticated || userId == Guid.Empty)
+            return OrderErrors.Unauthenticated;
 
         var order = await db.Orders
             .AsNoTracking()

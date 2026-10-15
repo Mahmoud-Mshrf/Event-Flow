@@ -20,7 +20,7 @@ public static class OrderErrors
         Error.Validation("Order.CannotCancelNonPendingOrder", "Only a pending order can be cancelled.");
     public static readonly Error Unauthenticated =
         Error.Unauthorized("Order.Unauthenticated",
-            "You must be logged in to place an order.");
+            "You must be authenticated to access orders.");
 
     public static readonly Error RegistrationNotOpen =
         Error.Conflict("Order.RegistrationNotOpen",
