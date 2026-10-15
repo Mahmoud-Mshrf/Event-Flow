@@ -5,6 +5,7 @@ using System.Text;
 using EventFlow.Application.Common.Interfaces;
 using EventFlow.Application.Settings;
 using EventFlow.Domain.Users.Enums;
+using EventFlow.Infrastructure.BackgroundJobs;
 using EventFlow.Infrastructure.Data;
 using EventFlow.Infrastructure.Helpers;
 using EventFlow.Infrastructure.Hubs;
@@ -179,6 +180,8 @@ public static class DependencyInjection
         services.Configure<QrCodeSettings>(configuration.GetSection("QrCode"));
         services.AddScoped<IQrCodeService, QrCodeService>();
         services.AddMessaging(configuration);
+        services.AddHostedService<OrderExpirationJob>();
+        services.AddHostedService<EventStatusAutomationJob>();
         return services;
         
     }
