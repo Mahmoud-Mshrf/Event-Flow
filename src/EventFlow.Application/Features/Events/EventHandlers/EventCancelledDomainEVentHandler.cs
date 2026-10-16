@@ -1,22 +1,25 @@
 using EventFlow.Application.Common.Interfaces;
+using EventFlow.Application.Messages;
 using EventFlow.Domain.Events.DomainEvents;
 using EventFlow.Domain.Orders.Enums;
 using EventFlow.Domain.Payments.Enums;
 using EventFlow.Domain.Tickets.Enums;
+using MassTransit;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 
 namespace EventFlow.Application.Features.Events.EventHandlers;
 
-internal sealed class EventCancelledDomainEventHandler(IAppDbContext db)
+internal sealed class EventCancelledDomainEventHandler(
+    IAppDbContext db,
+    IPublishEndpoint publishEndpoint)
     : INotificationHandler<EventCancelledDomainEvent>
 {
     public async Task Handle(
         EventCancelledDomainEvent notification,
         CancellationToken ct)
     {
-        // ── 1. Handle Pending orders ─────────────────────────────────
-        // Cancel them and release capacity back to TicketTypes
+        // ── 1. Handle Pending orders ──────────────────────────────────
         var pendingOrders = await db.Orders
             .IgnoreQueryFilters()
             .Include(o => o.OrderItems)
@@ -51,10 +54,7 @@ internal sealed class EventCancelledDomainEventHandler(IAppDbContext db)
                 }
             }
 
-            // ── 2. Mark stale Pending payments as Failed ─────────────
-            // Pending orders may have an initiated payment session that
-            // will never complete now — mark it Failed so there are no
-            // ghost Pending payments in the DB
+            // ── 2. Mark stale Pending payments as Failed ──────────────
             var pendingOrderIds = pendingOrders
                 .Select(o => o.Id)
                 .ToList();
@@ -69,10 +69,7 @@ internal sealed class EventCancelledDomainEventHandler(IAppDbContext db)
                 payment.MarkFailed("Event cancelled", DateTime.UtcNow);
         }
 
-        // ── 3. Handle Paid orders ────────────────────────────────────
-        // These attendees already paid — we can't cancel their orders
-        // (refund logic is out of scope for now) but we must cancel
-        // their Valid tickets so they don't show up as valid at the door
+        // ── 3. Handle Paid orders ─────────────────────────────────────
         var paidOrders = await db.Orders
             .IgnoreQueryFilters()
             .Where(o => o.EventId == notification.EventId
@@ -96,8 +93,52 @@ internal sealed class EventCancelledDomainEventHandler(IAppDbContext db)
                 ticket.Cancel();
         }
 
-        // ── 4. Persist all changes in one transaction ─────────────────
+        // ── 4. Persist all changes ────────────────────────────────────
         await db.SaveChangesAsync(ct);
 
+        // ── 5. Notify all affected attendees via RabbitMQ ─────────────
+        // Persist first — publish after. If publish fails MassTransit
+        // retries independently. If save fails we never publish.
+        var allOrders = pendingOrders.Concat(paidOrders).ToList();
+
+        if (allOrders.Count == 0)
+            return;
+
+        var attendeeIds = allOrders
+            .Select(o => o.AttendeeId)
+            .Distinct()
+            .ToList();
+
+        var attendees = await db.Users
+            .IgnoreQueryFilters()
+            .Where(u => attendeeIds.Contains(u.Id))
+            .Select(u => new { u.Id, u.Email, u.Name })
+            .ToListAsync(ct);
+
+        foreach (var order in pendingOrders)
+        {
+            var attendee = attendees.FirstOrDefault(a => a.Id == order.AttendeeId);
+            if (attendee is null) continue;
+
+            await publishEndpoint.Publish(new EventCancelledMessage(
+                notification.EventName,
+                attendee.Email,
+                attendee.Name,
+                order.OrderNumber,
+                WasPaid: false), ct);
+        }
+
+        foreach (var order in paidOrders)
+        {
+            var attendee = attendees.FirstOrDefault(a => a.Id == order.AttendeeId);
+            if (attendee is null) continue;
+
+            await publishEndpoint.Publish(new EventCancelledMessage(
+                notification.EventName,
+                attendee.Email,
+                attendee.Name,
+                order.OrderNumber,
+                WasPaid: true), ct);
+        }
     }
 }

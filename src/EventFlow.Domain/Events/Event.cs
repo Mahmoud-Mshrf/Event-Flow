@@ -293,7 +293,7 @@ public class Event : AuditableEntity
 
         EventStatus = EventStatus.Cancelled;
 
-        AddDomainEvent(new EventCancelledDomainEvent(Id, TenantId));
+        AddDomainEvent(new EventCancelledDomainEvent(Id, TenantId,EventName));
 
         return Result.Success;
     }

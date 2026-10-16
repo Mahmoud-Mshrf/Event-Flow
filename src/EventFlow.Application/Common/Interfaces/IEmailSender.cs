@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using EventFlow.Application.Common.Helpers;
 
 namespace EventFlow.Application.Common.Interfaces;
@@ -16,4 +17,6 @@ public interface IEmailSender
         string orderNumber,
         IReadOnlyCollection<IssuedTicketInfo> tickets,
         CancellationToken ct);
+    
+    Task SendAsync(string toEmail,string subject,  string orderNumber,string body,CancellationToken ct);
 }

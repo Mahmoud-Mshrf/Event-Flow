@@ -1,5 +1,6 @@
 using EventFlow.Application.Common.Helpers;
 using EventFlow.Application.Common.Interfaces;
+using MassTransit;
 using Microsoft.Extensions.Logging;
 
 namespace EventFlow.Infrastructure.Services;
@@ -46,4 +47,13 @@ public sealed class LogEmailSender(ILogger<LogEmailSender> logger) : IEmailSende
 
     return Task.CompletedTask;
 }
+
+    public Task SendAsync(string toEmail, string subject, string orderNumber,string body, CancellationToken ct)
+    {
+        logger.LogInformation(
+            "Event cancellation email sent to {Email} for order {OrderNumber}.",
+            toEmail,orderNumber);
+
+        return Task.CompletedTask;
+    }
 }
