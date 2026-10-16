@@ -17,7 +17,7 @@ using Microsoft.AspNetCore.Mvc;
 namespace EventFlow.Api.Controllers;
 
 [Route("api/events/{eventId:guid}/ticket-types")]
-[Authorize]
+[Authorize(Policy = "TenantOwner")]  // Owner 
 public sealed class TicketTypesController(
     ISender sender,
     ICurrentTenant currentTenant) : ApiController

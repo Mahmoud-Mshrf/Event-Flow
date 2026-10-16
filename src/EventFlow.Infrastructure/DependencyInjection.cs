@@ -119,7 +119,7 @@ public static class DependencyInjection
         services.AddScoped<ICurrentUser, CurrentUser>();
         services.AddScoped<ICurrentTenant,CurrentTenant>();
 
-                // Authorization policies
+        // Authorization policies
         services.AddAuthorization(options =>
         {
             options.AddPolicy("TenantOwner", policy =>
@@ -132,11 +132,6 @@ public static class DependencyInjection
                     .RequireAssertion(ctx =>
                         ctx.User.IsInRole(UserRole.Owner.ToString()) ||
                         ctx.User.IsInRole(UserRole.Employee.ToString())));
-
-            options.AddPolicy("CheckInStaff", policy =>
-                policy.RequireAuthenticatedUser()
-                    .RequireRole(UserRole.Employee.ToString())
-                    .RequireClaim("tenant_id"));
         });
         
         services.Configure<EmailSettings>(configuration.GetSection("EmailSettings"));

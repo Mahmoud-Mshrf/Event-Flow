@@ -26,6 +26,7 @@ namespace EventFlow.Api.Controllers;
 public sealed class EventsController(ISender sender,ICurrentTenant currentTenant) : ApiController
 {
     [HttpPost]
+    [Authorize(Policy = "TenantOwner")]  // Owner 
     [ProducesResponseType(typeof(EventDto), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ValidationProblemDetails), StatusCodes.Status422UnprocessableEntity)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status409Conflict)]
@@ -40,6 +41,7 @@ public sealed class EventsController(ISender sender,ICurrentTenant currentTenant
     }
 
     [HttpPut("{eventId:guid}/details")]
+    [Authorize(Policy = "TenantOwner")]  // Owner 
     [ProducesResponseType(typeof(EventDto), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
     [ProducesResponseType(typeof(ValidationProblemDetails), StatusCodes.Status422UnprocessableEntity)]
@@ -56,6 +58,7 @@ public sealed class EventsController(ISender sender,ICurrentTenant currentTenant
     }
 
     [HttpPut("{eventId:guid}/location")]
+    [Authorize(Policy = "TenantOwner")]  // Owner 
     [ProducesResponseType(typeof(EventDto), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
     [EndpointSummary("Update event location.")]
@@ -71,6 +74,7 @@ public sealed class EventsController(ISender sender,ICurrentTenant currentTenant
     }
 
     [HttpPut("{eventId:guid}/schedule")]
+    [Authorize(Policy = "TenantOwner")]  // Owner 
     [ProducesResponseType(typeof(EventDto), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
     [EndpointSummary("Update event start and end dates.")]
@@ -86,6 +90,7 @@ public sealed class EventsController(ISender sender,ICurrentTenant currentTenant
     }
 
     [HttpPut("{eventId:guid}/registration-period")]
+    [Authorize(Policy = "TenantOwner")]  // Owner 
     [ProducesResponseType(typeof(EventDto), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
     [EndpointSummary("Update event registration window.")]
@@ -102,6 +107,7 @@ public sealed class EventsController(ISender sender,ICurrentTenant currentTenant
     }
 
     [HttpPut("{eventId:guid}/visibility")]
+    [Authorize(Policy = "TenantOwner")]  // Owner 
     [ProducesResponseType(typeof(EventDto), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
     [EndpointSummary("Update event visibility.")]
@@ -117,6 +123,7 @@ public sealed class EventsController(ISender sender,ICurrentTenant currentTenant
     }
 
     [HttpPost("{eventId:guid}/publish")]
+    [Authorize(Policy = "TenantOwner")]  // Owner 
     [ProducesResponseType(typeof(EventDto), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status409Conflict)]
@@ -131,6 +138,7 @@ public sealed class EventsController(ISender sender,ICurrentTenant currentTenant
     }
 
     [HttpPost("{eventId:guid}/cancel")]
+    [Authorize(Policy = "TenantOwner")]  // Owner 
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status409Conflict)]
@@ -145,6 +153,7 @@ public sealed class EventsController(ISender sender,ICurrentTenant currentTenant
     }
 
     [HttpGet("{eventId:guid}")]
+    [Authorize(Policy = "TenantStaff")]  // Owner + Employee
     [ProducesResponseType(typeof(EventDto), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
     [EndpointSummary("Get event details by id.")]
@@ -159,6 +168,7 @@ public sealed class EventsController(ISender sender,ICurrentTenant currentTenant
     }
 
     [HttpGet]
+    [Authorize(Policy = "TenantStaff")]  // Owner + Employee
     [ProducesResponseType(typeof(PaginatedList<EventDto>), StatusCodes.Status200OK)]
     [EndpointSummary("Get all events for the current tenant.")]
     [EndpointName("GetOrganizerEvents")]
