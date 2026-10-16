@@ -183,6 +183,7 @@ public static class DependencyInjection
         services.AddMessaging(configuration);
         services.AddHostedService<OrderExpirationJob>();
         services.AddHostedService<EventStatusAutomationJob>();
+        services.AddHostedService<TokenCleanupJob>();
         return services;
         
     }
