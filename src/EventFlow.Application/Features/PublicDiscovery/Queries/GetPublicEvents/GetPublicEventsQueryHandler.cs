@@ -30,7 +30,7 @@ public sealed class GetPublicEventsQueryHandler(
                 e.EventStatus == EventStatus.Published ||
                 e.EventStatus == EventStatus.RegistrationOpen ||
                 e.EventStatus == EventStatus.RegistrationClosed)
-            .Where(e => e.StartDate >= now);
+            .Where(e => e.EndDate >= now);
 
         if (!string.IsNullOrWhiteSpace(request.SearchTerm))
         {

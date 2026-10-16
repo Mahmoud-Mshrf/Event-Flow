@@ -48,11 +48,11 @@ public sealed class LogEmailSender(ILogger<LogEmailSender> logger) : IEmailSende
     return Task.CompletedTask;
 }
 
-    public Task SendAsync(string toEmail, string subject, string orderNumber,string body, CancellationToken ct)
+    public Task SendAsync(string toEmail, string subject,string body, CancellationToken ct)
     {
         logger.LogInformation(
-            "Event cancellation email sent to {Email} for order {OrderNumber}.",
-            toEmail,orderNumber);
+            "Event cancellation email sent to {Email} for yor order",
+            toEmail);
 
         return Task.CompletedTask;
     }

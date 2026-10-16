@@ -242,7 +242,7 @@ public class Event : AuditableEntity
 
         EventStatus = EventStatus.Published;
 
-        AddDomainEvent(new EventPublishedDomainEvent(Id, TenantId, Visibility));
+        AddDomainEvent(new EventPublishedDomainEvent(Id, TenantId,EventName, Visibility));
 
         return Result.Success;
     }

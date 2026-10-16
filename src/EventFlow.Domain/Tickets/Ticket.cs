@@ -119,11 +119,11 @@ public class Ticket:AuditableEntity
 
     public Result<Success> Cancel()
     {
-        if (Status == TicketStatus.Cancelled)
-            return TicketErrors.CannotCancel;
-
         if (Status == TicketStatus.CheckedIn)
-            return TicketErrors.CannotCancel;
+        return TicketErrors.AlreadyCheckedIn; 
+
+    if (Status == TicketStatus.Cancelled)
+        return TicketErrors.AlreadyCancelled;
 
         Status = TicketStatus.Cancelled;
 

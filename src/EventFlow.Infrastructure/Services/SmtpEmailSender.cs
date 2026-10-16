@@ -132,7 +132,7 @@ public sealed class SmtpEmailSender(EmailService emailService) : IEmailSender
     }
 
 
-    public async Task SendAsync(string toEmail,string orderNumber,string subject,string body,CancellationToken ct)
+    public async Task SendAsync(string toEmail,string subject,string body,CancellationToken ct)
     {
         var message = new EmailMessage
         {

@@ -54,10 +54,10 @@ public static class TicketErrors
             "Ticket.TicketCancelled",
             "Cancelled tickets cannot be checked in.");
 
-    public static readonly Error CannotCancel =
+    public static readonly Error AlreadyCancelled =
         Error.Conflict(
             "Ticket.CannotCancel",
-            "Ticket cannot be cancelled.");
+            "Ticket has already been cancelled.");
 
     public static readonly Error Unauthenticated =
         Error.Unauthorized("Ticket.Unauthenticated",
