@@ -58,7 +58,7 @@ public sealed class ResetPasswordCommandHandler(
             refreshToken.Revoke(replacedByTokenId: null);
 
         // 7. Raise event — notify user via email, non-blocking
-        user.AddDomainEvent(new PasswordResetCompletedDomainEvent(user.Email));
+        user.AddDomainEvent(new PasswordResetCompletedDomainEvent(user.Email,user.Name));
 
         await db.SaveChangesAsync(ct);
 
