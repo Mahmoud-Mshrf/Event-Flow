@@ -7,6 +7,7 @@ using EventFlow.Domain.StaffInvitations.Enums;
 using EventFlow.Domain.Users;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Caching.Hybrid;
 using Microsoft.Extensions.Options;
 
 namespace EventFlow.Application.Features.Staff.Commands.InviteStaff;
@@ -18,7 +19,7 @@ internal sealed class InviteStaffCommandHandler(
     IPasswordHasher passwordHasher,
     IDateTimeProvider dateTimeProvider,
     IEmailSender emailSender,
-    IOptions<FrontendSettings> frontendSettings)
+    IOptions<FrontendSettings> frontendSettings,HybridCache cache)
     : IRequestHandler<InviteStaffCommand, Result<Success>>
 {
     public async Task<Result<Success>> Handle(
@@ -66,7 +67,7 @@ internal sealed class InviteStaffCommandHandler(
 
         await db.StaffInvitations.AddAsync(invitation, ct);
         await db.SaveChangesAsync(ct);
-
+        await cache.RemoveByTagAsync($"tenant-{tenantId}-invitations", ct);
         // ── 6. Build clickable invitation link ────────────────────────
         // Frontend reads token + email from URL params
         // Pre-fills them in the form — user only types name + password

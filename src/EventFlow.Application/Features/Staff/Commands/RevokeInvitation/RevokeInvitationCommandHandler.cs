@@ -3,11 +3,12 @@ using EventFlow.Domain.Common.Results;
 using EventFlow.Domain.StaffInvitations;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Caching.Hybrid;
 
 namespace EventFlow.Application.Features.Staff.Commands.RevokeInvitation;
 
 internal sealed class RevokeInvitationCommandHandler(
-    IAppDbContext db)
+    IAppDbContext db,HybridCache cache)
     : IRequestHandler<RevokeInvitationCommand, Result<Success>>
 {
     public async Task<Result<Success>> Handle(
@@ -27,6 +28,7 @@ internal sealed class RevokeInvitationCommandHandler(
             return result.Errors!;
 
         await db.SaveChangesAsync(ct);
+        await cache.RemoveByTagAsync($"tenant-{invitation.TenantId}-invitations", ct);
         return Result.Success;
     }
 }

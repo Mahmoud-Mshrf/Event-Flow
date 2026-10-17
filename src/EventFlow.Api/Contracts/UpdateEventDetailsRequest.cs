@@ -1,4 +1,5 @@
 using EventFlow.Domain.Events.Enums;
+using EventFlow.Domain.Users.Enums;
 
 namespace EventFlow.Api.Contracts;
 
@@ -8,3 +9,12 @@ public sealed record UpdateEventScheduleRequest(DateTime StartDate, DateTime End
 public sealed record UpdateEventRegistrationPeriodRequest(DateTime RegistrationStart, DateTime RegistrationEnd);
 public sealed record UpdateEventVisibilityRequest(EventVisibility Visibility);
 
+public sealed record InviteStaffRequest(
+    string InviteeEmail,
+    UserRole Role);
+
+public sealed record AcceptInvitationRequest(
+    string InviteeEmail,
+    string Token,
+    string Name,
+    string Password);

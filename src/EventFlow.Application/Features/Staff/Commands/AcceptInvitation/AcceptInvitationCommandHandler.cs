@@ -5,6 +5,7 @@ using EventFlow.Domain.StaffInvitations.Enums;
 using EventFlow.Domain.Users;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Caching.Hybrid;
 
 namespace EventFlow.Application.Features.Staff.Commands.AcceptInvitation;
 
@@ -12,7 +13,7 @@ internal sealed class AcceptInvitationCommandHandler(
     IAppDbContext db,
     IPasswordHasher passwordHasher,
     IDateTimeProvider dateTimeProvider,
-    IEmailSender emailSender)
+    IEmailSender emailSender,HybridCache cache)
     : IRequestHandler<AcceptInvitationCommand, Result<Success>>
 {
     public async Task<Result<Success>> Handle(
@@ -84,7 +85,8 @@ internal sealed class AcceptInvitationCommandHandler(
 
         await db.Users.AddAsync(user, ct);
         await db.SaveChangesAsync(ct);
-
+        await cache.RemoveByTagAsync($"tenant-{invitation.TenantId}-staff", ct);
+        await cache.RemoveByTagAsync($"tenant-{invitation.TenantId}-invitations", ct);
         // ── 6. Welcome email ──────────────────────────────────────────
         var subject = "Welcome to EventFlow!";
         var body = $"""
