@@ -5,6 +5,7 @@ using EventFlow.Domain.Identity;
 using EventFlow.Domain.Orders;
 using EventFlow.Domain.Orders.OrderItems;
 using EventFlow.Domain.Payments;
+using EventFlow.Domain.StaffInvitations;
 using EventFlow.Domain.Tenants;
 using EventFlow.Domain.Tickets;
 using EventFlow.Domain.TicketTypes;
@@ -41,6 +42,7 @@ public sealed class AppDbContext : DbContext, IAppDbContext
     public DbSet<RefreshToken> RefreshTokens => Set<RefreshToken>();
     public DbSet<VerificationToken> VerificationTokens => Set<VerificationToken>();
     public DbSet<ProcessedWebhookEvent> ProcessedWebhookEvents => Set<ProcessedWebhookEvent>();
+    public DbSet<StaffInvitation> StaffInvitations => Set<StaffInvitation>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -82,6 +84,9 @@ public sealed class AppDbContext : DbContext, IAppDbContext
 
         modelBuilder.Entity<Ticket>()
             .HasQueryFilter(t => t.TenantId == CurrentTenantId);
+
+        modelBuilder.Entity<StaffInvitation>()
+            .HasQueryFilter(i => i.TenantId == CurrentTenantId);
 
         // User: staff only (non-null TenantId matching current tenant)
         // Attendees (null TenantId) are accessed via IgnoreQueryFilters

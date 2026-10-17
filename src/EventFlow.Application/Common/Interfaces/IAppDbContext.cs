@@ -3,6 +3,7 @@ using EventFlow.Domain.Identity;
 using EventFlow.Domain.Orders;
 using EventFlow.Domain.Orders.OrderItems;
 using EventFlow.Domain.Payments;
+using EventFlow.Domain.StaffInvitations;
 using EventFlow.Domain.Tenants;
 using EventFlow.Domain.Tickets;
 using EventFlow.Domain.TicketTypes;
@@ -24,6 +25,7 @@ public interface IAppDbContext
     DbSet<VerificationToken> VerificationTokens {get;}
     DbSet<RefreshToken> RefreshTokens {get;}
     DbSet<ProcessedWebhookEvent> ProcessedWebhookEvents{get;}
+    DbSet<StaffInvitation> StaffInvitations { get; }
     Task<int> SaveChangesAsync(CancellationToken cancellationToken);
 }
 
