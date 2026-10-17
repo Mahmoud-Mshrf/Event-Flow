@@ -3,6 +3,7 @@ namespace EventFlow.Application.Messages;
 public sealed record PaymentConfirmedMessage(
     Guid PaymentId,
     Guid OrderId,
+    Guid EventId,
     Guid TenantId,
     Guid AttendeeId,
     string AttendeeEmail,

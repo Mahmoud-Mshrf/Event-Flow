@@ -132,13 +132,13 @@ public sealed class SmtpEmailSender(EmailService emailService) : IEmailSender
     }
 
 
-    public async Task SendAsync(string toEmail,string subject,string body,CancellationToken ct)
+    public async Task SendAsync(string toEmail,string subject,string body,bool IsHtml,CancellationToken ct)
     {
         var message = new EmailMessage
         {
            To=toEmail,
            Body=body,
-           IsHtml=false,
+           IsHtml=IsHtml,
            Subject=subject  
         };
         await emailService.SendEmailAsync(message, ct);

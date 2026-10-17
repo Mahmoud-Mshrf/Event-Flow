@@ -37,7 +37,7 @@ public sealed class EventCancellationNotificationConsumer(
 
                We sincerely apologize for the inconvenience.
                """;
-        await emailSender.SendAsync(msg.AttendeeEmail,subject, body,cancellationToken);
+        await emailSender.SendAsync(msg.AttendeeEmail,subject, body,false,cancellationToken);
 
         logger.LogInformation(
             "Event cancellation email sent to {Email} for order {OrderNumber}.",

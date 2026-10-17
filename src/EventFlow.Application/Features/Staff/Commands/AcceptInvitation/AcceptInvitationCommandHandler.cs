@@ -99,7 +99,7 @@ internal sealed class AcceptInvitationCommandHandler(
             Welcome to the team!
             """;
 
-        await emailSender.SendAsync(email, subject, body,ct);
+        await emailSender.SendAsync(email, subject, body,false,ct);
 
         return Result.Success;
     }

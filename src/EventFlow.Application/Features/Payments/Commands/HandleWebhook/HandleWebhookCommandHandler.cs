@@ -166,6 +166,7 @@ private async Task<Result<Success>> HandlePaymentSucceeded(
     await publishEndpoint.Publish(new PaymentConfirmedMessage(
         payment.Id,
         order.Id,
+        order.EventId,
         order.TenantId,
         order.AttendeeId,
         order.Attendee.Email,

@@ -18,5 +18,5 @@ public interface IEmailSender
         IReadOnlyCollection<IssuedTicketInfo> tickets,
         CancellationToken ct);
     
-    Task SendAsync(string toEmail,string subject,string body,CancellationToken ct);
+    Task SendAsync(string toEmail,string subject,string body,bool isHtml,CancellationToken ct);
 }

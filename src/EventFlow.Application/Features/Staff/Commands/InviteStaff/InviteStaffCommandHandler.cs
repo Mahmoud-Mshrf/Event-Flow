@@ -92,7 +92,7 @@ internal sealed class InviteStaffCommandHandler(
             If you did not expect this invitation, you can safely ignore this email.
             """;
 
-        await emailSender.SendAsync(email, subject, body,ct);
+        await emailSender.SendAsync(email, subject,body,false,ct);
 
         return Result.Success;
     }

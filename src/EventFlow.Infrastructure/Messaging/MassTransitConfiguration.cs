@@ -17,7 +17,7 @@ public static class MassTransitConfiguration
         {
             // Register all consumers
             x.AddConsumer<TicketIssuanceConsumer>();
-            x.AddConsumer<EmailNotificationConsumer>();
+            // x.AddConsumer<EmailNotificationConsumer>();
 
             x.UsingRabbitMq((ctx, cfg) =>
             {
