@@ -17,4 +17,8 @@ public static class TenantErrors
     public static readonly Error NameAlreadyInUse =
     Error.Conflict("Tenant.NameAlreadyInUse",
         "An organization with this name already exists.");
+
+    public static readonly Error NoTenantContext = Error.Unauthorized(
+    "Tenant.NoTenantContext",
+    "No tenant context was found for the current user.");
 }

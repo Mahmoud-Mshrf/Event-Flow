@@ -1,6 +1,7 @@
 using EventFlow.Application.Common.Interfaces;
 using EventFlow.Domain.Common.Results;
 using EventFlow.Domain.StaffInvitations;
+using EventFlow.Domain.StaffInvitations.Enums;
 using EventFlow.Domain.Users;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
@@ -24,8 +25,11 @@ internal sealed class AcceptInvitationCommandHandler(
         // ── 1. Find the pending invitation ────────────────────────────
         // IgnoreQueryFilters — no tenant context when accepting
         var invitation = await db.StaffInvitations
-            .IgnoreQueryFilters()
-            .FirstOrDefaultAsync(i => i.InviteeEmail == email, ct);
+        .IgnoreQueryFilters()
+        .Where(i => i.InviteeEmail == email
+                && i.Status == StaffInvitationStatus.Pending)
+        .OrderByDescending(i => i.CreatedAtUtc)
+        .FirstOrDefaultAsync(ct);
 
         if (invitation is null)
             return StaffInvitationErrors.NotFound;
