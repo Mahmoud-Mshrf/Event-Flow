@@ -34,4 +34,3 @@ public static class TicketNumberGenerator
         return $"EVF-{date}-{random}";
     }
 }
-
