@@ -8,3 +8,9 @@ public sealed record StaffMemberDto(
     string Email,
     UserRole? Role,
     bool Disabled);
+
+public sealed record PendingInvitationDto(
+    Guid Id,
+    string Email,
+    UserRole? Role,
+    DateTime CreatedAtUtc,DateTimeOffset ExpiresAtUtc);
