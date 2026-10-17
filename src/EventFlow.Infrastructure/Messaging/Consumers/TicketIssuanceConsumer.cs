@@ -70,16 +70,16 @@ public sealed class TicketIssuanceConsumer(
 
         // ── Publish HTML email — separate retry scope ─────────────────
         await publishEndpoint.Publish(new EmailMessage
-        (
-            To : msg.AttendeeEmail,
-            Subject : $"Your tickets for {msg.EventName}",
-            IsHtml : true,
-            Body : BuildTicketsEmailBody(
+        {
+            To = msg.AttendeeEmail,
+            Subject = $"Your tickets for {msg.EventName}",
+            IsHtml = true,
+            Body = BuildTicketsEmailBody(
                 msg.AttendeeName,
                 msg.EventName,
                 msg.OrderNumber,
                 issued.Select(x => (x.Ticket.TicketNumber, x.TypeName)))
-        ), ct);
+        }, ct);
     }
 
     private static string BuildTicketsEmailBody(

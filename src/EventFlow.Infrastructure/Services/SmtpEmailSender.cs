@@ -1,5 +1,6 @@
 using EventFlow.Application.Common.Helpers;
 using EventFlow.Application.Common.Interfaces;
+using EventFlow.Application.Messages;
 using EventFlow.Infrastructure.Helpers;
 
 namespace EventFlow.Infrastructure.Services;

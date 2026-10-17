@@ -1,7 +1,9 @@
 namespace EventFlow.Application.Messages;
 
-public sealed record EmailMessage(
-    string To,
-    string Subject,
-    string Body,
-    bool IsHtml);
+    public class EmailMessage
+    {
+        public string To { get; set; }
+        public string Subject { get; set; }
+        public string Body { get; set; }
+        public bool IsHtml { get; set; }
+    }

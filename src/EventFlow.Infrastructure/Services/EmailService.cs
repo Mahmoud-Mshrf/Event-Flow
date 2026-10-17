@@ -1,3 +1,4 @@
+using EventFlow.Application.Messages;
 using EventFlow.Infrastructure.Helpers;
 using MailKit.Net.Smtp;
 using MailKit.Security;
