@@ -1,4 +1,4 @@
-using EventFlow.Application.Common.Interfaces;
+using EventFlow.Application.Common.Helpers;
 using EventFlow.Application.Messages;
 using MassTransit;
 using Microsoft.Extensions.Logging;
@@ -6,42 +6,47 @@ using Microsoft.Extensions.Logging;
 namespace EventFlow.Infrastructure.Messaging.Consumers;
 
 public sealed class EventCancellationNotificationConsumer(
-    IEmailSender emailSender,
-    ILogger<EventCancellationNotificationConsumer> logger,CancellationToken cancellationToken)
+    IPublishEndpoint publishEndpoint,
+    ILogger<EventCancellationNotificationConsumer> logger)
     : IConsumer<EventCancelledMessage>
 {
     public async Task Consume(ConsumeContext<EventCancelledMessage> context)
     {
         var msg = context.Message;
 
-        var subject = $"Update regarding your order for {msg.EventName}";
+        var name = EmailHtml.Encode(msg.AttendeeName);
+        var evt = EmailHtml.Encode(msg.EventName);
+        var order = EmailHtml.Encode(msg.OrderNumber);
 
-        var body = msg.WasPaid
+        var details = msg.WasPaid
             ? $"""
-               Dear {msg.AttendeeName},
-
-               We regret to inform you that {msg.EventName} has been cancelled.
-
-               Your order ({msg.OrderNumber}) has been affected and your ticket(s) 
-               have been cancelled. Please contact us to arrange your refund.
-
-               We sincerely apologize for the inconvenience.
+               <p>Your order <strong>{order}</strong> has been affected and your
+               ticket(s) are no longer valid.</p>
+               <p>A full refund is being processed automatically. You'll get a
+               separate email once it has been initiated.</p>
                """
             : $"""
-               Dear {msg.AttendeeName},
-
-               We regret to inform you that {msg.EventName} has been cancelled.
-
-               Your pending order ({msg.OrderNumber}) has been automatically cancelled 
-               and no payment was taken.
-
-               We sincerely apologize for the inconvenience.
+               <p>Your pending order <strong>{order}</strong> was cancelled
+               automatically. No payment was taken.</p>
                """;
-        await emailSender.SendAsync(msg.AttendeeEmail,subject, body,false,cancellationToken);
+
+        await publishEndpoint.Publish(new EmailMessage
+        {
+            To = msg.AttendeeEmail,
+            Subject = $"{msg.EventName} has been cancelled",
+            IsHtml = true,
+            Body = $"""
+                <h2>Event cancelled</h2>
+                <p>Hi {name},</p>
+                <p>We're sorry to let you know that <strong>{evt}</strong>
+                has been cancelled.</p>
+                {details}
+                <p>We apologize for the inconvenience.</p>
+                """
+        }, context.CancellationToken);
 
         logger.LogInformation(
-            "Event cancellation email sent to {Email} for order {OrderNumber}.",
-            msg.AttendeeEmail,
-            msg.OrderNumber);
+            "Event cancellation email queued for {Email}, order {OrderNumber}.",
+            msg.AttendeeEmail, msg.OrderNumber);
     }
 }

@@ -1,11 +1,16 @@
+using EventFlow.Application.Common.Helpers;
 using EventFlow.Application.Common.Interfaces;
+using EventFlow.Application.Messages;
+using EventFlow.Application.Settings;
 using EventFlow.Domain.Common.Results;
 using EventFlow.Domain.StaffInvitations;
 using EventFlow.Domain.StaffInvitations.Enums;
 using EventFlow.Domain.Users;
+using MassTransit;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Hybrid;
+using Microsoft.Extensions.Options;
 
 namespace EventFlow.Application.Features.Staff.Commands.AcceptInvitation;
 
@@ -13,7 +18,8 @@ internal sealed class AcceptInvitationCommandHandler(
     IAppDbContext db,
     IPasswordHasher passwordHasher,
     IDateTimeProvider dateTimeProvider,
-    IEmailSender emailSender,HybridCache cache)
+    IEmailSender emailSender,HybridCache cache,
+    IOptions<FrontendSettings> frontendSettings,IPublishEndpoint publishEndpoint)
     : IRequestHandler<AcceptInvitationCommand, Result<Success>>
 {
     public async Task<Result<Success>> Handle(
@@ -88,18 +94,19 @@ internal sealed class AcceptInvitationCommandHandler(
         await cache.RemoveByTagAsync($"tenant-{invitation.TenantId}-staff", ct);
         await cache.RemoveByTagAsync($"tenant-{invitation.TenantId}-invitations", ct);
         // ── 6. Welcome email ──────────────────────────────────────────
-        var subject = "Welcome to EventFlow!";
-        var body = $"""
-            Dear {request.Name},
-
-            Your account has been successfully created.
-            You can now log in using your email and the password
-            you set during invitation acceptance.
-
-            Welcome to the team!
-            """;
-
-        await emailSender.SendAsync(email, subject, body,false,ct);
+        await publishEndpoint.Publish(new EmailMessage
+        {
+            To = email,
+            Subject = "Welcome to EventFlow!",
+            IsHtml = true,
+            Body = $"""
+                <h2>Welcome to the team!</h2>
+                <p>Hi {EmailHtml.Encode(request.Name)},</p>
+                <p>Your account has been created. You can log in with this email
+                and the password you just set.</p>
+                {EmailHtml.Button($"{frontendSettings.Value.BaseUrl}/login", "Log in")}
+                """
+        }, ct);
 
         return Result.Success;
     }

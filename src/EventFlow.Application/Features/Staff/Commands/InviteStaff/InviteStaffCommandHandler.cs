@@ -1,10 +1,12 @@
 using EventFlow.Application.Common.Helpers;
 using EventFlow.Application.Common.Interfaces;
+using EventFlow.Application.Messages;
 using EventFlow.Application.Settings;
 using EventFlow.Domain.Common.Results;
 using EventFlow.Domain.StaffInvitations;
 using EventFlow.Domain.StaffInvitations.Enums;
 using EventFlow.Domain.Users;
+using MassTransit.Transports;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Hybrid;
@@ -19,7 +21,7 @@ internal sealed class InviteStaffCommandHandler(
     IPasswordHasher passwordHasher,
     IDateTimeProvider dateTimeProvider,
     IEmailSender emailSender,
-    IOptions<FrontendSettings> frontendSettings,HybridCache cache)
+    IOptions<FrontendSettings> frontendSettings,HybridCache cache,PublishEndpoint publishEndpoint)
     : IRequestHandler<InviteStaffCommand, Result<Success>>
 {
     public async Task<Result<Success>> Handle(
@@ -68,31 +70,36 @@ internal sealed class InviteStaffCommandHandler(
         await db.StaffInvitations.AddAsync(invitation, ct);
         await db.SaveChangesAsync(ct);
         await cache.RemoveByTagAsync($"tenant-{tenantId}-invitations", ct);
-        // ── 6. Build clickable invitation link ────────────────────────
-        // Frontend reads token + email from URL params
-        // Pre-fills them in the form — user only types name + password
+        // ── 6. Build the clickable link ───────────────────────────────
         var baseUrl = frontendSettings.Value.BaseUrl;
         var invitationLink =
             $"{baseUrl}/accept-invitation" +
             $"?token={Uri.EscapeDataString(rawToken)}" +
             $"&email={Uri.EscapeDataString(email)}";
 
-        // ── 7. Send invitation email ──────────────────────────────────
-        var subject = "You've been invited to join EventFlow";
-        var body = $"""
-            You have been invited to join an organization on EventFlow
-            as an {request.Role}.
+        var tenantName = await db.Tenants
+            .Where(t => t.Id == tenantId)
+            .Select(t => t.Name)
+            .FirstOrDefaultAsync(ct) ?? "an organization";
 
-            Click the link below to accept your invitation and set up your account:
-
-            {invitationLink}
-
-            This invitation expires in 48 hours.
-
-            If you did not expect this invitation, you can safely ignore this email.
-            """;
-
-        await emailSender.SendAsync(email, subject,body,false,ct);
+        // ── 7. Publish the invitation email ───────────────────────────
+        await publishEndpoint.Publish(new EmailMessage
+        {
+            To = email,
+            Subject = $"You've been invited to join {tenantName} on EventFlow",
+            IsHtml = true,
+            Body = $"""
+                <h2>You're invited!</h2>
+                <p>You've been invited to join <strong>{EmailHtml.Encode(tenantName)}</strong>
+                on EventFlow as <strong>{request.Role}</strong>.</p>
+                <p>Click the button below to set up your account.</p>
+                {EmailHtml.Button(invitationLink, "Accept invitation")}
+                <p>This invitation expires in 48 hours.</p>
+                <p style="color:#6b7280;font-size:13px;">
+                    If you weren't expecting this, you can ignore this email.
+                </p>
+                """
+        }, ct);
 
         return Result.Success;
     }
