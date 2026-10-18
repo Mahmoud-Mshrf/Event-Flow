@@ -53,5 +53,12 @@ public sealed class PaymentConfiguration : IEntityTypeConfiguration<Payment>
 
         builder.Property(p => p.CreatedAtUtc).IsRequired();
         builder.Property(p => p.LastModifiedUtc).IsRequired();
+
+        builder.Property(p => p.ProviderTransactionId)
+            .HasMaxLength(200)
+            .IsRequired(false);
+
+        builder.Property(p => p.RefundedAt)
+            .IsRequired(false);
     }
 }

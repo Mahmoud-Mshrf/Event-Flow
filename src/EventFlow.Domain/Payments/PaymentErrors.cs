@@ -42,5 +42,9 @@ public static readonly Error Unauthenticated =
     public static readonly Error OrderNotFound =
         Error.NotFound("Payment.OrderNotFound",
             "The order associated with this payment could not be found."); 
+
+    public static readonly Error NotRefundable = 
+        Error.Conflict("Payment.NotRefundable",
+            "Only succeeded payments can be refunded.");
 }
 

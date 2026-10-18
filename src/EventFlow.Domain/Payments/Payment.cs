@@ -14,6 +14,8 @@ public class Payment : AuditableEntity
     public decimal Amount { get; private set; }
     public PaymentStatus PaymentStatus { get; private set; }
     public string ProviderReferenceId { get; private set; } = null!;
+    public string? ProviderTransactionId { get; private set; }  // Paymob's txn ID — set on success , => ProviderEventId in ProcessedWebhookEvent
+    public DateTime? RefundedAt { get; private set; }           // set when refund confirmed
     public DateTime? SucceededAt { get; private set; }
     public DateTime? FailedAt { get; private set; }
     public string? FailureReason { get; private set; }
@@ -48,14 +50,14 @@ public class Payment : AuditableEntity
         return new Payment(id, tenantId, orderId, amount, providerReferenceId);
     }
 
-    public Result<Success> MarkSucceeded(DateTime succeededAtUtc)
+    public Result<Success> MarkSucceeded(string providerTransactionId,DateTime succeededAtUtc)
     {
         if (PaymentStatus != PaymentStatus.Pending)
             return PaymentErrors.CannotTransitionFromNonPending;
 
         PaymentStatus = PaymentStatus.Succeeded;
         SucceededAt = succeededAtUtc;
-
+        ProviderTransactionId = providerTransactionId;
         AddDomainEvent(new PaymentSucceededDomainEvent(Id, OrderId, TenantId));
 
         return Result.Success;
@@ -69,6 +71,17 @@ public class Payment : AuditableEntity
         PaymentStatus = PaymentStatus.Failed;
         FailedAt = failedAtUtc;
         FailureReason = reason;
+
+        return Result.Success;
+    }
+
+    public Result<Success> MarkRefunded(DateTime refundedAtUtc)
+    {
+        if (PaymentStatus != PaymentStatus.Succeeded)
+        return PaymentErrors.NotRefundable;
+        
+        RefundedAt = refundedAtUtc;
+        PaymentStatus = PaymentStatus.Refunded;
 
         return Result.Success;
     }
