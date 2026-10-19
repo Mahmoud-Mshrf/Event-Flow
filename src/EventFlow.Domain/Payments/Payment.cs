@@ -14,7 +14,7 @@ public class Payment : AuditableEntity
     public decimal Amount { get; private set; }
     public PaymentStatus PaymentStatus { get; private set; }
     public string ProviderReferenceId { get; private set; } = null!;
-    public string? ProviderTransactionId { get; private set; }  // Paymob's txn ID — set on success , => ProviderEventId in ProcessedWebhookEvent
+    public string? ProviderTransactionId { get; private set; }  // Paymob's txn ID — set on success , => ProviderEventId in PaymentWebhookEvent
     public DateTime? RefundedAt { get; private set; }           // set when refund confirmed
     public DateTime? SucceededAt { get; private set; }
     public DateTime? FailedAt { get; private set; }

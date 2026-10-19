@@ -19,5 +19,7 @@ public interface IPaymentGateway
     bool VerifyRedirectParams(
         IReadOnlyDictionary<string, string> queryParams,
         string hmac);
+
+    Task<bool> RefundPaymentAsync(string providerTransactionId,decimal amount,CancellationToken cancellationToken);
 }
 

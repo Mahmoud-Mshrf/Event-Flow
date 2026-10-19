@@ -180,6 +180,41 @@ public sealed class PaymobPaymentGateway(
             return null;
         }
     }
+
+    public async Task<bool> RefundPaymentAsync(
+    string providerTransactionId,
+    decimal amount,
+    CancellationToken ct)
+    {
+        var client = httpClientFactory.CreateClient("Paymob");
+
+        // Paymob refund endpoint — note this uses the legacy /api path
+        // even when using the modern Intention API for payment creation
+        // The refund API has not been updated to the new /v1/ path yet
+        var refundRequest = new
+        {
+            transaction_id = int.Parse(providerTransactionId),
+            amount_cents = (int)(amount * 100)
+        };
+
+        var response = await client.PostAsJsonAsync(
+            $"{_settings.BaseUrl}/api/acceptance/void_refund/refund",
+            refundRequest,
+            ct);
+
+        if (!response.IsSuccessStatusCode)
+        {
+            var errorBody = await response.Content.ReadAsStringAsync(ct);
+            throw new InvalidOperationException(
+                $"Paymob refund failed for transaction {providerTransactionId}. " +
+                $"Status: {response.StatusCode}. Body: {errorBody}");
+        }
+
+        // Paymob returns the refund transaction object on success
+        // We don't need the response body — success status code is enough
+        return true;
+    }
+
     public bool VerifyRedirectParams(
     IReadOnlyDictionary<string, string> queryParams,
     string hmac)
