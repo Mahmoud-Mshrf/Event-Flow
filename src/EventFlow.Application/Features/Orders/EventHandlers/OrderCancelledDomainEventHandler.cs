@@ -1,36 +1,42 @@
 using EventFlow.Application.Common.Interfaces;
 using EventFlow.Domain.Orders.Events;
+using EventFlow.Domain.Payments.Enums;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 
 namespace EventFlow.Application.Features.Orders.EventHandlers;
 
-public sealed class OrderCancelledDomainEventHandler(IAppDbContext db)
+internal sealed class OrderCancelledDomainEventHandler(
+    IAppDbContext db,
+    IDateTimeProvider dateTimeProvider)
     : INotificationHandler<OrderCancelledDomainEvent>
 {
-    public async Task Handle(OrderCancelledDomainEvent notification, CancellationToken cancellationToken)
+    public async Task Handle(OrderCancelledDomainEvent notification, CancellationToken ct)
     {
-        if (notification.Items.Count == 0)
-            return;
+        var orderItems = await db.OrderItems
+            .IgnoreQueryFilters()
+            .Where(oi => oi.OrderId == notification.OrderId)
+            .ToListAsync(ct);
 
-        var releasesByTicketType = notification.Items
-            .GroupBy(i => i.TicketTypeId)
-            .ToDictionary(g => g.Key, g => g.Sum(i => i.Quantity));
+        var ticketTypeIds = orderItems.Select(oi => oi.TicketTypeId).Distinct().ToList();
 
         var ticketTypes = await db.TicketTypes
-            .Where(tt => releasesByTicketType.Keys.Contains(tt.Id)
-                && tt.TenantId == notification.TenantId)
-            .ToListAsync(cancellationToken);
+            .IgnoreQueryFilters()
+            .Where(tt => ticketTypeIds.Contains(tt.Id))
+            .ToListAsync(ct);
 
-        foreach (var (ticketTypeId, quantity) in releasesByTicketType)
-        {
-            var ticketType = ticketTypes.FirstOrDefault(tt => tt.Id == ticketTypeId);
-            if (ticketType is null)
-                continue;
+        foreach (var item in orderItems)
+            ticketTypes.FirstOrDefault(tt => tt.Id == item.TicketTypeId)?.Release(item.Quantity);
 
-            ticketType.Release(quantity);
-        }
+        var pendingPayments = await db.Payments
+            .IgnoreQueryFilters()
+            .Where(p => p.OrderId == notification.OrderId
+                     && p.PaymentStatus == PaymentStatus.Pending)
+            .ToListAsync(ct);
 
-        await db.SaveChangesAsync(cancellationToken);
+        foreach (var payment in pendingPayments)
+            payment.MarkFailed("Order cancelled", dateTimeProvider.UtcNow);
+
+        await db.SaveChangesAsync(ct);
     }
 }

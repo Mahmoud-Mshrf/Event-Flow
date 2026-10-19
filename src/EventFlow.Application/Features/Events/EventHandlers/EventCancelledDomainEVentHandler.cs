@@ -7,118 +7,96 @@ using EventFlow.Domain.Tickets.Enums;
 using MassTransit;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 
 namespace EventFlow.Application.Features.Events.EventHandlers;
 
 internal sealed class EventCancelledDomainEventHandler(
     IAppDbContext db,
-    IPublishEndpoint publishEndpoint)
+    IPublishEndpoint publishEndpoint,
+    ILogger<EventCancelledDomainEventHandler> logger)
     : INotificationHandler<EventCancelledDomainEvent>
 {
     public async Task Handle(
         EventCancelledDomainEvent notification,
         CancellationToken ct)
     {
-        // ── 1. Handle Pending orders ──────────────────────────────────
+        // ── 1. Pending orders ─────────────────────────────────────────
+        // Cancel() raises OrderCancelledDomainEvent. Its handler releases
+        // the reserved capacity and fails the pending payment, so we do
+        // NOT do that here (it would release capacity twice).
         var pendingOrders = await db.Orders
             .IgnoreQueryFilters()
-            .Include(o => o.OrderItems)
             .Where(o => o.EventId == notification.EventId
                      && o.TenantId == notification.TenantId
                      && o.OrderStatus == OrderStatus.Pending)
             .ToListAsync(ct);
 
-        if (pendingOrders.Count > 0)
-        {
-            var ticketTypeIds = pendingOrders
-                .SelectMany(o => o.OrderItems)
-                .Select(i => i.TicketTypeId)
-                .Distinct()
-                .ToList();
+        foreach (var order in pendingOrders)
+            order.Cancel();
 
-            var ticketTypes = await db.TicketTypes
-                .IgnoreQueryFilters()
-                .Where(tt => ticketTypeIds.Contains(tt.Id))
-                .ToListAsync(ct);
-
-            foreach (var order in pendingOrders)
-            {
-                order.Cancel();
-
-                foreach (var item in order.OrderItems)
-                {
-                    var ticketType = ticketTypes
-                        .FirstOrDefault(tt => tt.Id == item.TicketTypeId);
-
-                    ticketType?.Release(item.Quantity);
-                }
-            }
-
-            // ── 2. Mark stale Pending payments as Failed ──────────────
-            var pendingOrderIds = pendingOrders
-                .Select(o => o.Id)
-                .ToList();
-
-            var pendingPayments = await db.Payments
-                .IgnoreQueryFilters()
-                .Where(p => pendingOrderIds.Contains(p.OrderId)
-                         && p.PaymentStatus == PaymentStatus.Pending)
-                .ToListAsync(ct);
-
-            foreach (var payment in pendingPayments)
-                payment.MarkFailed("Event cancelled", DateTime.UtcNow);
-        }
-
-        // ── 3. Handle Paid orders ─────────────────────────────────────
+        // ── 2. Paid orders ────────────────────────────────────────────
+        // The order stays Paid (the money was really taken), but its valid
+        // tickets must stop working. Checked-in tickets are left alone:
+        // Ticket.Cancel() rejects them.
         var paidOrders = await db.Orders
             .IgnoreQueryFilters()
+            .AsNoTracking()
             .Where(o => o.EventId == notification.EventId
                      && o.TenantId == notification.TenantId
                      && o.OrderStatus == OrderStatus.Paid)
             .ToListAsync(ct);
 
-        if (paidOrders.Count > 0)
-        {
-            var paidOrderIds = paidOrders
-                .Select(o => o.Id)
-                .ToList();
+        var paidOrderIds = paidOrders.Select(o => o.Id).ToList();
 
-            var validTickets = await db.Tickets
-                .IgnoreQueryFilters()
-                .Where(t => paidOrderIds.Contains(t.OrderId)
-                         && t.Status == TicketStatus.Valid)
-                .ToListAsync(ct);
+        var validTickets = await db.Tickets
+            .IgnoreQueryFilters()
+            .Where(t => paidOrderIds.Contains(t.OrderId)
+                     && t.Status == TicketStatus.Valid)
+            .ToListAsync(ct);
 
-            foreach (var ticket in validTickets)
-                ticket.Cancel();
-        }
+        foreach (var ticket in validTickets)
+            ticket.Cancel();
 
-        // ── 4. Persist all changes ────────────────────────────────────
-        await db.SaveChangesAsync(ct);
-
-        // ── 5. Notify all affected attendees via RabbitMQ ─────────────
-        // Persist first — publish after. If publish fails MassTransit
-        // retries independently. If save fails we never publish.
-        var allOrders = pendingOrders.Concat(paidOrders).ToList();
-
-        if (allOrders.Count == 0)
+        if (pendingOrders.Count == 0 && paidOrders.Count == 0)
             return;
 
-        var attendeeIds = allOrders
-            .Select(o => o.AttendeeId)
+        // ── 3. Load what the messages need, before saving ─────────────
+        // Payments we can refund: succeeded, with Paymob's transaction id
+        var succeededPayments = await db.Payments
+            .IgnoreQueryFilters()
+            .AsNoTracking()
+            .Where(p => paidOrderIds.Contains(p.OrderId)
+                     && p.PaymentStatus == PaymentStatus.Succeeded)
+            .ToListAsync(ct);
+
+        var paymentByOrderId = succeededPayments
+            .GroupBy(p => p.OrderId)
+            .ToDictionary(g => g.Key, g => g.First());
+
+        // One batch query for every affected attendee.
+        // User has no global filter, and we select by id, so this is scoped.
+        var attendeeIds = pendingOrders.Select(o => o.AttendeeId)
+            .Concat(paidOrders.Select(o => o.AttendeeId))
             .Distinct()
             .ToList();
 
         var attendees = await db.Users
-            .IgnoreQueryFilters()
+            .AsNoTracking()
             .Where(u => attendeeIds.Contains(u.Id))
             .Select(u => new { u.Id, u.Email, u.Name })
-            .ToListAsync(ct);
+            .ToDictionaryAsync(u => u.Id, ct);
 
+        // ── 4. Persist ────────────────────────────────────────────────
+        // Dispatches OrderCancelledDomainEvent for each pending order
+        await db.SaveChangesAsync(ct);
+
+        // ── 5. Notify and refund ──────────────────────────────────────
+        // One message per attendee and per refund: each retries on its own.
         foreach (var order in pendingOrders)
         {
-            var attendee = attendees.FirstOrDefault(a => a.Id == order.AttendeeId);
-            if (attendee is null) continue;
+            if (!attendees.TryGetValue(order.AttendeeId, out var attendee))
+                continue;
 
             await publishEndpoint.Publish(new EventCancelledMessage(
                 notification.EventName,
@@ -130,8 +108,8 @@ internal sealed class EventCancelledDomainEventHandler(
 
         foreach (var order in paidOrders)
         {
-            var attendee = attendees.FirstOrDefault(a => a.Id == order.AttendeeId);
-            if (attendee is null) continue;
+            if (!attendees.TryGetValue(order.AttendeeId, out var attendee))
+                continue;
 
             await publishEndpoint.Publish(new EventCancelledMessage(
                 notification.EventName,
@@ -139,6 +117,26 @@ internal sealed class EventCancelledDomainEventHandler(
                 attendee.Name,
                 order.OrderNumber,
                 WasPaid: true), ct);
+
+            if (!paymentByOrderId.TryGetValue(order.Id, out var payment)
+                || payment.ProviderTransactionId is null)
+            {
+                // Needs manual follow-up: we cannot refund without Paymob's id
+                logger.LogWarning(
+                    "No refundable payment found for paid order {OrderNumber} " +
+                    "of cancelled event {EventId}.",
+                    order.OrderNumber, notification.EventId);
+                continue;
+            }
+
+            await publishEndpoint.Publish(new RefundRequestedMessage(
+                PaymentId: payment.Id,
+                ProviderTransactionId: payment.ProviderTransactionId,
+                Amount: payment.Amount,
+                OrderNumber: order.OrderNumber,
+                AttendeeEmail: attendee.Email,
+                AttendeeName: attendee.Name,
+                EventName: notification.EventName), ct);
         }
     }
 }
