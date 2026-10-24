@@ -1,3 +1,4 @@
+using System.Threading.RateLimiting;
 using EventFlow.Api.OpenApi.Transformers;
 using EventFlow.Application;
 using EventFlow.Infrastructure;
@@ -20,7 +21,21 @@ builder.Services.AddOpenApi(options =>
     options.AddDocumentTransformer<BearerSecuritySchemeTransformer>();
     options.AddOperationTransformer<BearerSecuritySchemeTransformer>();
 });
-
+builder.Services.AddRateLimiter(options =>
+{
+    options.AddPolicy("ByIpPolicy",HttpContext =>
+        RateLimitPartition.GetSlidingWindowLimiter(
+            partitionKey:HttpContext.Connection.RemoteIpAddress?.ToString()??"unknown",
+            factory:_=> new SlidingWindowRateLimiterOptions
+            {
+                Window=TimeSpan.FromMinutes(1),
+                PermitLimit=100,
+                SegmentsPerWindow=6,
+                AutoReplenishment=true
+            }
+        )
+    );
+});
 var app = builder.Build();
 
 if (app.Environment.IsDevelopment())
